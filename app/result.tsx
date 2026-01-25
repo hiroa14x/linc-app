@@ -36,21 +36,15 @@ export default function ResultScreen() {
     router.push('/contact');
   };
 
-  const handleRestart = async () => {
+  const handleRestart = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    // AsyncStorageをクリアしてからリセット
-    try {
-      await AsyncStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // エラーは無視
-    }
+    // 状態をリセット
     dispatch({ type: 'RESET' });
-    // router.replaceの代わりにdismissAllを使用してスタックをクリア
-    while (router.canGoBack()) {
-      router.back();
-    }
+    // AsyncStorageをクリア（非同期で実行、待たない）
+    AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    // トップ画面に戻る
     router.replace('/');
   };
 
