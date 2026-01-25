@@ -46,27 +46,24 @@ export default function Step03Screen() {
   const isLastQuestion = state.step03Index === questions.length - 1;
   const progress = ((state.step03Index + 1) / questions.length) * 25 + 75; // 75-100%
 
-  const handleToggle = () => {
+  // ワンタップで回答して次へ進む
+  const handleAnswer = (value: boolean) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    const currentValue = state.step03Answers[currentQuestion.id] ?? false;
+
+    // 回答を保存
     dispatch({ 
       type: 'SET_STEP03_ANSWER', 
-      payload: { id: currentQuestion.id, value: !currentValue } 
+      payload: { id: currentQuestion.id, value } 
     });
-  };
-
-  const handleNext = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
 
     if (isLastQuestion) {
-      // 結果を計算
+      // 結果を計算（現在の回答も含める）
+      const updatedAnswers = { ...state.step03Answers, [currentQuestion.id]: value };
       const resultFactors = calculateResultFactors(
         state.candidateFactors,
-        state.step03Answers
+        updatedAnswers
       );
       const specialist = determineSpecialist(resultFactors);
       
@@ -95,8 +92,6 @@ export default function Step03Screen() {
     return null;
   }
 
-  const isChecked = state.step03Answers[currentQuestion.id] ?? false;
-
   return (
     <ScreenContainer className="flex-1 bg-background" edges={["top", "bottom", "left", "right"]}>
       {/* 進捗バー */}
@@ -121,30 +116,30 @@ export default function Step03Screen() {
           </Text>
         </View>
 
-        {/* チェックボックス */}
-        <TouchableOpacity
-          onPress={handleToggle}
-          className={`w-full py-5 px-6 rounded-2xl border-2 ${
-            isChecked ? 'border-primary bg-white' : 'border-border bg-surface'
-          }`}
-          style={styles.checkCard}
-          activeOpacity={0.8}
-        >
-          <View className="flex-row items-center justify-between">
-            <Text className={`text-base font-medium ${
-              isChecked ? 'text-primary' : 'text-foreground'
-            }`}>
+        {/* ワンタップ選択肢 */}
+        <View className="gap-4">
+          <TouchableOpacity
+            onPress={() => handleAnswer(true)}
+            className="w-full py-5 px-6 rounded-2xl border-2 border-primary bg-white"
+            style={styles.answerCard}
+            activeOpacity={0.7}
+          >
+            <Text className="text-lg font-semibold text-primary text-center">
               当てはまる
             </Text>
-            <View className={`w-6 h-6 rounded border-2 items-center justify-center ${
-              isChecked ? 'border-primary bg-primary' : 'border-border'
-            }`}>
-              {isChecked && (
-                <Text className="text-white text-xs font-bold">✓</Text>
-              )}
-            </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => handleAnswer(false)}
+            className="w-full py-5 px-6 rounded-2xl border-2 border-border bg-surface"
+            style={styles.answerCard}
+            activeOpacity={0.7}
+          >
+            <Text className="text-lg font-semibold text-muted text-center">
+              当てはまらない
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* 補助文 */}
         <View className="mt-6">
@@ -154,21 +149,11 @@ export default function Step03Screen() {
         </View>
       </ScrollView>
 
-      {/* ボタン */}
+      {/* 戻るボタン */}
       <View className="px-6 pb-8 pt-4">
         <TouchableOpacity
-          onPress={handleNext}
-          className="w-full py-4 rounded-xl bg-primary"
-          style={styles.button}
-          activeOpacity={0.8}
-        >
-          <Text className="text-white text-lg font-semibold text-center">
-            {isLastQuestion ? '結果を見る' : '次へ'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
           onPress={handleBack}
-          className="w-full py-3 mt-2"
+          className="w-full py-3"
           activeOpacity={0.6}
         >
           <Text className="text-muted text-base text-center">
@@ -184,10 +169,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  checkCard: {
+  answerCard: {
     minHeight: 64,
-  },
-  button: {
-    minHeight: 56,
   },
 });

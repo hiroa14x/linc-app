@@ -31,27 +31,25 @@ export default function Step02Screen() {
   const isLastQuestion = state.step02Index === questions.length - 1;
   const progress = ((state.step02Index + 1) / questions.length) * 50 + 25; // 25-75%
 
-  const handleToggle = () => {
+  // ワンタップで回答して次へ進む
+  const handleAnswer = (value: boolean) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    const currentValue = state.step02Answers[currentQuestion.id] ?? false;
+    
+    // 回答を保存
     dispatch({ 
       type: 'SET_STEP02_ANSWER', 
-      payload: { id: currentQuestion.id, value: !currentValue } 
+      payload: { id: currentQuestion.id, value } 
     });
-  };
 
-  const handleNext = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-
+    // 次へ進む
     if (isLastQuestion) {
-      // 要因候補を計算
+      // 要因候補を計算（現在の回答も含める）
+      const updatedAnswers = { ...state.step02Answers, [currentQuestion.id]: value };
       const candidateFactors = calculateCandidateFactors(
         state.difficultyType,
-        state.step02Answers
+        updatedAnswers
       );
       dispatch({ type: 'SET_CANDIDATE_FACTORS', payload: candidateFactors });
       dispatch({ type: 'SET_CURRENT_STEP', payload: 'step03' });
@@ -78,8 +76,6 @@ export default function Step02Screen() {
     return null;
   }
 
-  const isChecked = state.step02Answers[currentQuestion.id] ?? false;
-
   return (
     <ScreenContainer className="flex-1 bg-background" edges={["top", "bottom", "left", "right"]}>
       {/* 進捗バー */}
@@ -104,30 +100,30 @@ export default function Step02Screen() {
           </Text>
         </View>
 
-        {/* チェックボックス */}
-        <TouchableOpacity
-          onPress={handleToggle}
-          className={`w-full py-5 px-6 rounded-2xl border-2 ${
-            isChecked ? 'border-primary bg-white' : 'border-border bg-surface'
-          }`}
-          style={styles.checkCard}
-          activeOpacity={0.8}
-        >
-          <View className="flex-row items-center justify-between">
-            <Text className={`text-base font-medium ${
-              isChecked ? 'text-primary' : 'text-foreground'
-            }`}>
+        {/* ワンタップ選択肢 */}
+        <View className="gap-4">
+          <TouchableOpacity
+            onPress={() => handleAnswer(true)}
+            className="w-full py-5 px-6 rounded-2xl border-2 border-primary bg-white"
+            style={styles.answerCard}
+            activeOpacity={0.7}
+          >
+            <Text className="text-lg font-semibold text-primary text-center">
               当てはまる
             </Text>
-            <View className={`w-6 h-6 rounded border-2 items-center justify-center ${
-              isChecked ? 'border-primary bg-primary' : 'border-border'
-            }`}>
-              {isChecked && (
-                <Text className="text-white text-xs font-bold">✓</Text>
-              )}
-            </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => handleAnswer(false)}
+            className="w-full py-5 px-6 rounded-2xl border-2 border-border bg-surface"
+            style={styles.answerCard}
+            activeOpacity={0.7}
+          >
+            <Text className="text-lg font-semibold text-muted text-center">
+              当てはまらない
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* 補助文 */}
         <View className="mt-6">
@@ -137,21 +133,11 @@ export default function Step02Screen() {
         </View>
       </ScrollView>
 
-      {/* ボタン */}
+      {/* 戻るボタン */}
       <View className="px-6 pb-8 pt-4">
         <TouchableOpacity
-          onPress={handleNext}
-          className="w-full py-4 rounded-xl bg-primary"
-          style={styles.button}
-          activeOpacity={0.8}
-        >
-          <Text className="text-white text-lg font-semibold text-center">
-            {isLastQuestion ? '次のステップへ' : '次へ'}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
           onPress={handleBack}
-          className="w-full py-3 mt-2"
+          className="w-full py-3"
           activeOpacity={0.6}
         >
           <Text className="text-muted text-base text-center">
@@ -167,10 +153,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  checkCard: {
+  answerCard: {
     minHeight: 64,
-  },
-  button: {
-    minHeight: 56,
   },
 });
