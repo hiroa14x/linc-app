@@ -99,7 +99,7 @@ export default function Step03Screen() {
         <View className="h-2 bg-border rounded-full overflow-hidden">
           <View className="h-full bg-primary rounded-full" style={{ width: `${progress}%` }} />
         </View>
-        <Text className="text-xs text-muted mt-2 text-right">
+        <Text style={styles.progress} className="text-muted mt-2 text-right">
           STEP 3/4 ({state.step03Index + 1}/{questions.length})
         </Text>
       </View>
@@ -109,9 +109,9 @@ export default function Step03Screen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 設問 */}
+        {/* 設問 - Heading sm (18px) */}
         <View className="mt-12 mb-8">
-          <Text className="text-lg font-semibold text-foreground text-center leading-8">
+          <Text style={styles.question} className="text-foreground text-center">
             {currentQuestion.text}
           </Text>
         </View>
@@ -124,7 +124,7 @@ export default function Step03Screen() {
             style={styles.answerCard}
             activeOpacity={0.7}
           >
-            <Text className="text-lg font-semibold text-primary text-center">
+            <Text style={styles.answerText} className="text-primary text-center">
               当てはまる
             </Text>
           </TouchableOpacity>
@@ -135,7 +135,7 @@ export default function Step03Screen() {
             style={styles.answerCard}
             activeOpacity={0.7}
           >
-            <Text className="text-lg font-semibold text-muted text-center">
+            <Text style={styles.answerText} className="text-muted text-center">
               当てはまらない
             </Text>
           </TouchableOpacity>
@@ -143,7 +143,7 @@ export default function Step03Screen() {
 
         {/* 補助文 */}
         <View className="mt-6">
-          <Text className="text-sm text-muted text-center">
+          <Text style={styles.helper} className="text-muted text-center">
             迷った場合は、より近いものを選んでください
           </Text>
         </View>
@@ -156,7 +156,7 @@ export default function Step03Screen() {
           className="w-full py-3"
           activeOpacity={0.6}
         >
-          <Text className="text-muted text-base text-center">
+          <Text style={styles.backButton} className="text-muted text-center">
             戻る
           </Text>
         </TouchableOpacity>
@@ -169,7 +169,34 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
+  // Progress: Body xs (12px)
+  progress: {
+    fontSize: 12,
+    lineHeight: 20,
+  },
+  // Question: Heading sm (18px), line-height 1.5
+  question: {
+    fontSize: 18,
+    lineHeight: 30,
+    fontWeight: '600',
+  },
+  // Answer text: Button lg (16px)
+  answerText: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '600',
+  },
   answerCard: {
     minHeight: 64,
+  },
+  // Helper text: Body sm (14px)
+  helper: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  // Back button: Body md (16px)
+  backButton: {
+    fontSize: 16,
+    lineHeight: 24,
   },
 });

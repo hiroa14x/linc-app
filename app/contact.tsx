@@ -68,7 +68,7 @@ export default function ContactScreen() {
     <ScreenContainer className="flex-1 bg-background" edges={["top", "bottom", "left", "right"]}>
       {/* ヘッダー */}
       <View className="px-6 pt-4 pb-2">
-        <Text className="text-xl font-bold text-primary text-center">
+        <Text style={styles.title} className="text-primary text-center">
           この結果で問い合わせる
         </Text>
       </View>
@@ -80,7 +80,7 @@ export default function ContactScreen() {
       >
         {/* 説明 */}
         <View className="mt-4 mb-6">
-          <Text className="text-base text-muted text-center leading-7">
+          <Text style={styles.body} className="text-muted text-center">
             以下の内容を専門機関への{"\n"}
             問い合わせにご活用ください。
           </Text>
@@ -89,18 +89,18 @@ export default function ContactScreen() {
         {/* 結果カード */}
         <View className="bg-white rounded-2xl p-5 mb-6 border border-border">
           <View className="mb-4">
-            <Text className="text-sm font-medium text-muted mb-1">困りの内容</Text>
-            <Text className="text-base font-semibold text-foreground">{difficultyLabel}</Text>
+            <Text style={styles.label} className="text-muted mb-1">困りの内容</Text>
+            <Text style={styles.value} className="text-foreground">{difficultyLabel}</Text>
           </View>
           
           <View className="mb-4">
-            <Text className="text-sm font-medium text-muted mb-1">考えられる要因</Text>
-            <Text className="text-base font-semibold text-foreground">{factorLabels}</Text>
+            <Text style={styles.label} className="text-muted mb-1">考えられる要因</Text>
+            <Text style={styles.value} className="text-foreground">{factorLabels}</Text>
           </View>
           
           <View>
-            <Text className="text-sm font-medium text-muted mb-1">おすすめの専門職</Text>
-            <Text className="text-base font-semibold text-foreground">{specialistLabel}</Text>
+            <Text style={styles.label} className="text-muted mb-1">おすすめの専門職</Text>
+            <Text style={styles.value} className="text-foreground">{specialistLabel}</Text>
           </View>
         </View>
 
@@ -111,8 +111,8 @@ export default function ContactScreen() {
           style={styles.button}
           activeOpacity={0.8}
         >
-          <Text className="text-white text-lg font-semibold text-center">
-            結果を共有する
+          <Text style={styles.buttonText} className="text-white text-center">
+            📤 結果を共有する
           </Text>
         </TouchableOpacity>
 
@@ -123,14 +123,14 @@ export default function ContactScreen() {
           style={styles.button}
           activeOpacity={0.8}
         >
-          <Text className="text-primary text-lg font-semibold text-center">
-            メールで問い合わせる
+          <Text style={styles.buttonTextOutline} className="text-primary text-center">
+            ✉️ メールで問い合わせる
           </Text>
         </TouchableOpacity>
 
         {/* 注意事項 */}
         <View className="bg-surface rounded-xl p-4 mb-6">
-          <Text className="text-sm text-muted leading-6">
+          <Text style={styles.disclaimer} className="text-muted">
             この結果は診断ではなく、ひとつの目安です。{"\n"}
             専門家による詳しい評価をおすすめします。
           </Text>
@@ -144,7 +144,7 @@ export default function ContactScreen() {
           className="w-full py-3"
           activeOpacity={0.6}
         >
-          <Text className="text-muted text-base text-center">
+          <Text style={styles.backButton} className="text-muted text-center">
             戻る
           </Text>
         </TouchableOpacity>
@@ -157,7 +157,51 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
+  // Title: Heading md (20px)
+  title: {
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: '700',
+  },
+  // Body: Body md (16px)
+  body: {
+    fontSize: 16,
+    lineHeight: 27,
+  },
+  // Label: Body sm (14px)
+  label: {
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: '500',
+  },
+  // Value: Body md (16px)
+  value: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '600',
+  },
+  // Button text: Button lg (16px)
+  buttonText: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '600',
+  },
+  buttonTextOutline: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '600',
+  },
   button: {
     minHeight: 56,
+  },
+  // Disclaimer: Body sm (14px)
+  disclaimer: {
+    fontSize: 14,
+    lineHeight: 24,
+  },
+  // Back button: Body md (16px)
+  backButton: {
+    fontSize: 16,
+    lineHeight: 24,
   },
 });

@@ -2,34 +2,20 @@ import { Text, View, TouchableOpacity, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { Platform, StyleSheet } from "react-native";
-import { useState } from "react";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useScreening, DifficultyType } from "@/lib/screening-context";
 
 export default function Step01Screen() {
   const router = useRouter();
-  const { state, dispatch } = useScreening();
-  const [selected, setSelected] = useState<DifficultyType>(state.difficultyType);
-  const [showWarning, setShowWarning] = useState(false);
+  const { dispatch } = useScreening();
 
+  // ワンタップで選択して次へ進む
   const handleSelect = (type: DifficultyType) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    setSelected(type);
-    setShowWarning(false);
-  };
-
-  const handleNext = () => {
-    if (!selected) {
-      setShowWarning(true);
-      return;
-    }
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    dispatch({ type: 'SET_DIFFICULTY_TYPE', payload: selected });
+    dispatch({ type: 'SET_DIFFICULTY_TYPE', payload: type });
     dispatch({ type: 'SET_CURRENT_STEP', payload: 'step02' });
     dispatch({ type: 'SET_STEP02_INDEX', payload: 0 });
     router.push('/step02');
@@ -42,12 +28,6 @@ export default function Step01Screen() {
     router.back();
   };
 
-  const cards = [
-    { type: 'writing' as DifficultyType, label: '書く' },
-    { type: 'reading' as DifficultyType, label: '読む' },
-    { type: 'both' as DifficultyType, label: '書く・読む' },
-  ];
-
   return (
     <ScreenContainer className="flex-1 bg-background" edges={["top", "bottom", "left", "right"]}>
       {/* 進捗バー */}
@@ -55,7 +35,7 @@ export default function Step01Screen() {
         <View className="h-2 bg-border rounded-full overflow-hidden">
           <View className="h-full bg-primary rounded-full" style={{ width: '25%' }} />
         </View>
-        <Text className="text-xs text-muted mt-2 text-right">STEP 1/4</Text>
+        <Text style={styles.progress} className="text-muted mt-2 text-right">STEP 1/4</Text>
       </View>
 
       <ScrollView 
@@ -63,73 +43,74 @@ export default function Step01Screen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 質問 */}
-        <View className="mt-8 mb-6">
-          <Text className="text-xl font-bold text-primary text-center">
-            なにが苦手ですか？
+        {/* 質問 - Heading md (20px) */}
+        <View className="mt-12 mb-8">
+          <Text style={styles.heading} className="text-foreground text-center">
+            お子さんが苦手なのは{"\n"}どちらですか？
           </Text>
         </View>
 
-        {/* カード選択 */}
+        {/* ワンタップ選択肢 */}
         <View className="gap-4">
-          {cards.map((card) => (
-            <TouchableOpacity
-              key={card.type}
-              onPress={() => handleSelect(card.type)}
-              className={`w-full py-5 px-6 rounded-2xl border-2 ${
-                selected === card.type
-                  ? 'border-primary bg-white'
-                  : 'border-border bg-surface'
-              }`}
-              style={styles.card}
-              activeOpacity={0.8}
-            >
-              <View className="flex-row items-center justify-between">
-                <Text className={`text-lg font-semibold ${
-                  selected === card.type ? 'text-primary' : 'text-foreground'
-                }`}>
-                  {card.label}
-                </Text>
-                <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ${
-                  selected === card.type ? 'border-primary bg-primary' : 'border-border'
-                }`}>
-                  {selected === card.type && (
-                    <View className="w-2 h-2 rounded-full bg-white" />
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity
+            onPress={() => handleSelect('writing')}
+            className="w-full py-5 px-6 rounded-2xl bg-surface border-2 border-transparent"
+            style={styles.card}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.cardTitle} className="text-foreground text-center">
+              書く
+            </Text>
+            <Text style={styles.cardDesc} className="text-muted text-center mt-1">
+              文字を書くことが苦手
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => handleSelect('reading')}
+            className="w-full py-5 px-6 rounded-2xl bg-surface border-2 border-transparent"
+            style={styles.card}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.cardTitle} className="text-foreground text-center">
+              読む
+            </Text>
+            <Text style={styles.cardDesc} className="text-muted text-center mt-1">
+              文字を読むことが苦手
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => handleSelect('both')}
+            className="w-full py-5 px-6 rounded-2xl bg-surface border-2 border-transparent"
+            style={styles.card}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.cardTitle} className="text-foreground text-center">
+              書く・読む
+            </Text>
+            <Text style={styles.cardDesc} className="text-muted text-center mt-1">
+              どちらも苦手
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* 警告メッセージ */}
-        {showWarning && (
-          <View className="mt-4 p-3 bg-warning/10 rounded-lg">
-            <Text className="text-warning text-sm text-center">
-              いずれかを選択してください
-            </Text>
-          </View>
-        )}
+        {/* 補助文 */}
+        <View className="mt-6">
+          <Text style={styles.helper} className="text-muted text-center">
+            タップすると次へ進みます
+          </Text>
+        </View>
       </ScrollView>
 
-      {/* ボタン */}
+      {/* 戻るボタン */}
       <View className="px-6 pb-8 pt-4">
         <TouchableOpacity
-          onPress={handleNext}
-          className={`w-full py-4 rounded-xl ${selected ? 'bg-primary' : 'bg-muted'}`}
-          style={styles.button}
-          activeOpacity={0.8}
-        >
-          <Text className="text-white text-lg font-semibold text-center">
-            次へ
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
           onPress={handleBack}
-          className="w-full py-3 mt-2"
+          className="w-full py-3"
           activeOpacity={0.6}
         >
-          <Text className="text-muted text-base text-center">
+          <Text style={styles.backButton} className="text-muted text-center">
             戻る
           </Text>
         </TouchableOpacity>
@@ -142,10 +123,39 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  card: {
-    minHeight: 64,
+  // Progress: Body xs (12px)
+  progress: {
+    fontSize: 12,
+    lineHeight: 20,
   },
-  button: {
-    minHeight: 56,
+  // Heading md: 20px, line-height 1.4
+  heading: {
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: '600',
+  },
+  // Card title: Heading sm (18px)
+  cardTitle: {
+    fontSize: 18,
+    lineHeight: 27,
+    fontWeight: '600',
+  },
+  // Card description: Body sm (14px)
+  cardDesc: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  card: {
+    minHeight: 80,
+  },
+  // Helper text: Body sm (14px)
+  helper: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  // Back button: Body md (16px)
+  backButton: {
+    fontSize: 16,
+    lineHeight: 24,
   },
 });

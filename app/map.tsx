@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, ScrollView, Linking, TextInput } from "react-native";
+import { Text, View, TouchableOpacity, ScrollView, Linking } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { Platform, StyleSheet } from "react-native";
@@ -7,7 +7,6 @@ import { useState } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import { useScreening, getSpecialistLabel } from "@/lib/screening-context";
 
-// 都道府県リスト
 const PREFECTURES = [
   '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
   '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
@@ -21,33 +20,36 @@ const PREFECTURES = [
 export default function MapScreen() {
   const router = useRouter();
   const { state } = useScreening();
-  const [selectedPrefecture, setSelectedPrefecture] = useState<string>('');
-  const [showPrefectureList, setShowPrefectureList] = useState(false);
+  const [selectedPrefecture, setSelectedPrefecture] = useState<string | null>(null);
 
   const specialistLabel = getSpecialistLabel(state.specialist);
 
-  // 検索キーワードを生成
-  const getSearchKeyword = () => {
-    const keywords: string[] = [];
-    if (state.specialist === 'ST' || state.specialist === 'both') {
-      keywords.push('言語聴覚士');
-    }
-    if (state.specialist === 'OT' || state.specialist === 'both') {
-      keywords.push('作業療法士');
-    }
-    return keywords.join(' ');
-  };
-
-  const handleSearch = () => {
+  const handlePrefectureSelect = (prefecture: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+    setSelectedPrefecture(prefecture);
+  };
+
+  const handleSearch = () => {
+    if (!selectedPrefecture) return;
     
-    const keyword = getSearchKeyword();
-    const location = selectedPrefecture || '現在地';
-    const query = encodeURIComponent(`${location} ${keyword} 小児 リハビリ`);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    // 専門職に応じた検索キーワード
+    let searchKeyword = '';
+    if (state.specialist === 'ST') {
+      searchKeyword = '言語聴覚士 小児';
+    } else if (state.specialist === 'OT') {
+      searchKeyword = '作業療法士 小児';
+    } else {
+      searchKeyword = '言語聴覚士 作業療法士 小児';
+    }
+
+    const query = encodeURIComponent(`${selectedPrefecture} ${searchKeyword}`);
     const url = `https://www.google.com/maps/search/${query}`;
-    
     Linking.openURL(url);
   };
 
@@ -58,103 +60,72 @@ export default function MapScreen() {
     router.back();
   };
 
-  const handleSelectPrefecture = (prefecture: string) => {
-    setSelectedPrefecture(prefecture);
-    setShowPrefectureList(false);
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
   return (
     <ScreenContainer className="flex-1 bg-background" edges={["top", "bottom", "left", "right"]}>
       {/* ヘッダー */}
       <View className="px-6 pt-4 pb-2">
-        <Text className="text-xl font-bold text-primary text-center">
-          近隣の支援機関を探す
+        <Text style={styles.title} className="text-primary text-center">
+          支援機関を探す
         </Text>
       </View>
 
+      {/* 説明 */}
+      <View className="px-6 mb-4">
+        <Text style={styles.body} className="text-muted text-center">
+          お住まいの都道府県を選択してください
+        </Text>
+        <Text style={styles.bodySmall} className="text-muted text-center mt-2">
+          検索対象：{specialistLabel}
+        </Text>
+      </View>
+
+      {/* 都道府県リスト */}
       <ScrollView 
         className="flex-1 px-6"
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* 説明 */}
-        <View className="mt-4 mb-6">
-          <Text className="text-base text-muted text-center leading-7">
-            お住まいの地域で{"\n"}
-            <Text className="font-semibold text-primary">{specialistLabel}</Text>
-            {"\n"}がいる施設を検索できます。
-          </Text>
-        </View>
-
-        {/* 都道府県選択 */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-foreground mb-2">
-            都道府県を選択
-          </Text>
-          <TouchableOpacity
-            onPress={() => setShowPrefectureList(!showPrefectureList)}
-            className="w-full py-4 px-4 rounded-xl bg-white border border-border"
-            activeOpacity={0.8}
-          >
-            <Text className={selectedPrefecture ? 'text-foreground' : 'text-muted'}>
-              {selectedPrefecture || '選択してください'}
-            </Text>
-          </TouchableOpacity>
-
-          {showPrefectureList && (
-            <View className="mt-2 bg-white rounded-xl border border-border max-h-60">
-              <ScrollView nestedScrollEnabled>
-                {PREFECTURES.map((pref) => (
-                  <TouchableOpacity
-                    key={pref}
-                    onPress={() => handleSelectPrefecture(pref)}
-                    className={`py-3 px-4 border-b border-border ${
-                      selectedPrefecture === pref ? 'bg-sub/10' : ''
-                    }`}
-                    activeOpacity={0.6}
-                  >
-                    <Text className={selectedPrefecture === pref ? 'text-primary font-medium' : 'text-foreground'}>
-                      {pref}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-
-        {/* 検索ボタン */}
-        <TouchableOpacity
-          onPress={handleSearch}
-          className="w-full py-4 rounded-xl bg-primary mb-4"
-          style={styles.button}
-          activeOpacity={0.8}
-        >
-          <Text className="text-white text-lg font-semibold text-center">
-            Google マップで検索
-          </Text>
-        </TouchableOpacity>
-
-        {/* 注意事項 */}
-        <View className="bg-surface rounded-xl p-4 mb-6">
-          <Text className="text-sm text-muted leading-6">
-            検索結果は参考情報です。{"\n"}
-            施設への連絡前に、対応可能かどうかをご確認ください。
-          </Text>
+        <View className="flex-row flex-wrap justify-between">
+          {PREFECTURES.map((pref) => (
+            <TouchableOpacity
+              key={pref}
+              onPress={() => handlePrefectureSelect(pref)}
+              className={`w-[48%] py-3 px-4 rounded-xl mb-3 border-2 ${
+                selectedPrefecture === pref
+                  ? 'border-primary bg-surface'
+                  : 'border-border bg-white'
+              }`}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.prefText} className={`text-center ${
+                selectedPrefecture === pref ? 'text-primary' : 'text-foreground'
+              }`}>
+                {pref}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
 
-      {/* 戻るボタン */}
+      {/* ボタン */}
       <View className="px-6 pb-8 pt-4">
         <TouchableOpacity
+          onPress={handleSearch}
+          className={`w-full py-4 rounded-xl ${selectedPrefecture ? 'bg-primary' : 'bg-muted'}`}
+          style={styles.button}
+          activeOpacity={0.8}
+          disabled={!selectedPrefecture}
+        >
+          <Text style={styles.buttonText} className="text-white text-center">
+            Google マップで検索
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           onPress={handleBack}
-          className="w-full py-3"
+          className="w-full py-3 mt-2"
           activeOpacity={0.6}
         >
-          <Text className="text-muted text-base text-center">
+          <Text style={styles.backButton} className="text-muted text-center">
             戻る
           </Text>
         </TouchableOpacity>
@@ -166,8 +137,42 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 16,
+  },
+  // Title: Heading md (20px)
+  title: {
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: '700',
+  },
+  // Body: Body md (16px)
+  body: {
+    fontSize: 16,
+    lineHeight: 27,
+  },
+  // Body small: Body sm (14px)
+  bodySmall: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  // Prefecture text: Body md (16px)
+  prefText: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '500',
+  },
+  // Button text: Button lg (16px)
+  buttonText: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '600',
   },
   button: {
     minHeight: 56,
+  },
+  // Back button: Body md (16px)
+  backButton: {
+    fontSize: 16,
+    lineHeight: 24,
   },
 });
