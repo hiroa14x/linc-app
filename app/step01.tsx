@@ -1,7 +1,6 @@
-import { Text, View, TouchableOpacity, ScrollView } from "react-native";
+import { Text, View, TouchableOpacity, ScrollView , Platform, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { Platform, StyleSheet } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useScreening, DifficultyType } from "@/lib/screening-context";
