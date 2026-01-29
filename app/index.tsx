@@ -94,6 +94,9 @@ export default function OnboardingScreen() {
             className="w-full py-4 rounded-xl mb-3 border-2 border-primary"
             style={styles.button}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="続きから再開する"
+            accessibilityHint="前回の続きからスクリーニングを再開します"
           >
             <Text style={styles.buttonText} className="text-primary text-center">
               続きから再開する
@@ -105,6 +108,9 @@ export default function OnboardingScreen() {
           className="w-full py-4 rounded-xl bg-primary"
           style={styles.button}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="はじめる"
+          accessibilityHint="スクリーニングを最初から開始します"
         >
           <Text style={styles.buttonText} className="text-white text-center">
             はじめる

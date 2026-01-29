@@ -56,6 +56,9 @@ export default function Step01Screen() {
             className="w-full py-5 px-6 rounded-2xl bg-surface border-2 border-transparent"
             style={styles.card}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="書く、文字を書くことが苦手"
+            accessibilityHint="タップすると次の質問に進みます"
           >
             <Text style={styles.cardTitle} className="text-foreground text-center">
               書く
@@ -70,6 +73,9 @@ export default function Step01Screen() {
             className="w-full py-5 px-6 rounded-2xl bg-surface border-2 border-transparent"
             style={styles.card}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="読む、文字を読むことが苦手"
+            accessibilityHint="タップすると次の質問に進みます"
           >
             <Text style={styles.cardTitle} className="text-foreground text-center">
               読む
@@ -84,6 +90,9 @@ export default function Step01Screen() {
             className="w-full py-5 px-6 rounded-2xl bg-surface border-2 border-transparent"
             style={styles.card}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="書く・読む、どちらも苦手"
+            accessibilityHint="タップすると次の質問に進みます"
           >
             <Text style={styles.cardTitle} className="text-foreground text-center">
               書く・読む
@@ -108,6 +117,9 @@ export default function Step01Screen() {
           onPress={handleBack}
           className="w-full py-3"
           activeOpacity={0.6}
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+          accessibilityHint="前の画面に戻ります"
         >
           <Text style={styles.backButton} className="text-muted text-center">
             戻る

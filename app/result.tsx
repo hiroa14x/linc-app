@@ -35,14 +35,18 @@ export default function ResultScreen() {
     router.push('/contact');
   };
 
-  const handleRestart = () => {
+  const handleRestart = async () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     // 状態をリセット
     dispatch({ type: 'RESET' });
-    // AsyncStorageをクリア（非同期で実行、待たない）
-    AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    // AsyncStorageをクリア（完了を待つ）
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // 削除エラーは無視
+    }
     // トップ画面に戻る
     router.replace('/');
   };
@@ -70,7 +74,7 @@ export default function ResultScreen() {
         </View>
 
         {/* 要約カード - Body md (16px) */}
-        <View className="bg-white rounded-2xl p-5 mb-4 border border-border">
+        <View className="bg-background rounded-2xl p-5 mb-4 border border-border">
           <Text style={styles.body} className="text-foreground">
             あなたが「<Text style={styles.highlight} className="text-primary">{difficultyLabel}</Text>」で困りを感じる背景には「<Text style={styles.highlight} className="text-primary">{factorLabels}</Text>」が関係している可能性があります。
           </Text>
@@ -89,6 +93,9 @@ export default function ResultScreen() {
           className="w-full py-4 rounded-xl bg-primary mb-3"
           style={styles.button}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="近隣の支援機関を探す"
+          accessibilityHint="都道府県を選んでGoogleマップで支援機関を検索します"
         >
           <View className="flex-row items-center justify-center">
             <Text style={styles.buttonText} className="text-white">
@@ -103,6 +110,9 @@ export default function ResultScreen() {
           className="w-full py-4 rounded-xl border-2 border-primary mb-6"
           style={styles.button}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="この結果で問い合わせる"
+          accessibilityHint="スクリーニング結果を共有またはメールで送信します"
         >
           <View className="flex-row items-center justify-center">
             <Text style={styles.buttonTextOutline} className="text-primary">
@@ -124,6 +134,9 @@ export default function ResultScreen() {
           onPress={handleRestart}
           className="w-full py-3"
           activeOpacity={0.6}
+          accessibilityRole="button"
+          accessibilityLabel="最初からやり直す"
+          accessibilityHint="スクリーニングをリセットして最初から始めます"
         >
           <Text style={styles.restartButton} className="text-muted text-center">
             最初からやり直す

@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, ScrollView, Linking , Platform, StyleSheet } from "react-native";
+import { Text, View, TouchableOpacity, ScrollView, Linking, Alert, Platform, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useState } from "react";
@@ -30,9 +30,9 @@ export default function MapScreen() {
     setSelectedPrefecture(prefecture);
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!selectedPrefecture) return;
-    
+
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -49,7 +49,23 @@ export default function MapScreen() {
 
     const query = encodeURIComponent(`${selectedPrefecture} ${searchKeyword}`);
     const url = `https://www.google.com/maps/search/${query}`;
-    Linking.openURL(url);
+
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert(
+          'エラー',
+          'Google マップを開けませんでした。ブラウザで検索してください。'
+        );
+      }
+    } catch {
+      Alert.alert(
+        'エラー',
+        'URLを開く際にエラーが発生しました。'
+      );
+    }
   };
 
   const handleBack = () => {
@@ -92,9 +108,13 @@ export default function MapScreen() {
               className={`w-[48%] py-3 px-4 rounded-xl mb-3 border-2 ${
                 selectedPrefecture === pref
                   ? 'border-primary bg-surface'
-                  : 'border-border bg-white'
+                  : 'border-border bg-background'
               }`}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={pref}
+              accessibilityState={{ selected: selectedPrefecture === pref }}
+              accessibilityHint="タップして都道府県を選択します"
             >
               <Text style={styles.prefText} className={`text-center ${
                 selectedPrefecture === pref ? 'text-primary' : 'text-foreground'
@@ -114,6 +134,10 @@ export default function MapScreen() {
           style={styles.button}
           activeOpacity={0.8}
           disabled={!selectedPrefecture}
+          accessibilityRole="button"
+          accessibilityLabel="Googleマップで検索"
+          accessibilityHint={selectedPrefecture ? `${selectedPrefecture}の支援機関をGoogleマップで検索します` : '都道府県を選択してください'}
+          accessibilityState={{ disabled: !selectedPrefecture }}
         >
           <Text style={styles.buttonText} className="text-white text-center">
             Google マップで検索
@@ -123,6 +147,9 @@ export default function MapScreen() {
           onPress={handleBack}
           className="w-full py-3 mt-2"
           activeOpacity={0.6}
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+          accessibilityHint="結果画面に戻ります"
         >
           <Text style={styles.backButton} className="text-muted text-center">
             戻る

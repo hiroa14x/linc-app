@@ -1,11 +1,11 @@
 import { Text, View, TouchableOpacity, ScrollView , Platform, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 
 import { ScreenContainer } from "@/components/screen-container";
-import { 
-  useScreening, 
+import {
+  useScreening,
   STEP03_QUESTIONS,
   calculateResultFactors,
   determineSpecialist,
@@ -15,11 +15,12 @@ import {
 export default function Step03Screen() {
   const router = useRouter();
   const { state, dispatch } = useScreening();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // 候補要因に基づいた質問リストを取得
   const questions = useMemo(() => {
     const allQuestions: { id: string; text: string; score: number; factor: FactorType }[] = [];
-    
+
     for (const factor of state.candidateFactors) {
       if (factor === 'automation') continue; // 自動化は設問なし
       const factorQuestions = STEP03_QUESTIONS[factor];
@@ -27,17 +28,24 @@ export default function Step03Screen() {
         allQuestions.push({ ...q, factor });
       }
     }
-    
+
     return allQuestions;
   }, [state.candidateFactors]);
 
-  // 質問がない場合は直接結果画面へ
-  if (questions.length === 0) {
-    // 自動化のみの場合
-    dispatch({ type: 'SET_RESULT_FACTORS', payload: ['automation'] });
-    dispatch({ type: 'SET_SPECIALIST', payload: determineSpecialist(['automation']) });
-    dispatch({ type: 'SET_CURRENT_STEP', payload: 'result' });
-    router.replace('/result');
+  // 質問がない場合は直接結果画面へ（useEffectで副作用を処理）
+  useEffect(() => {
+    if (questions.length === 0 && !isRedirecting) {
+      setIsRedirecting(true);
+      // 自動化のみの場合
+      dispatch({ type: 'SET_RESULT_FACTORS', payload: ['automation'] });
+      dispatch({ type: 'SET_SPECIALIST', payload: determineSpecialist(['automation']) });
+      dispatch({ type: 'SET_CURRENT_STEP', payload: 'result' });
+      router.replace('/result');
+    }
+  }, [questions.length, isRedirecting, dispatch, router]);
+
+  // リダイレクト中または質問がない場合はnullを返す
+  if (questions.length === 0 || isRedirecting) {
     return null;
   }
 
@@ -119,9 +127,12 @@ export default function Step03Screen() {
         <View className="gap-4">
           <TouchableOpacity
             onPress={() => handleAnswer(true)}
-            className="w-full py-5 px-6 rounded-2xl border-2 border-primary bg-white"
+            className="w-full py-5 px-6 rounded-2xl border-2 border-primary bg-background"
             style={styles.answerCard}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="当てはまる"
+            accessibilityHint="この質問に当てはまると回答して次に進みます"
           >
             <Text style={styles.answerText} className="text-primary text-center">
               当てはまる
@@ -133,6 +144,9 @@ export default function Step03Screen() {
             className="w-full py-5 px-6 rounded-2xl border-2 border-border bg-surface"
             style={styles.answerCard}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="当てはまらない"
+            accessibilityHint="この質問に当てはまらないと回答して次に進みます"
           >
             <Text style={styles.answerText} className="text-muted text-center">
               当てはまらない
@@ -154,6 +168,9 @@ export default function Step03Screen() {
           onPress={handleBack}
           className="w-full py-3"
           activeOpacity={0.6}
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+          accessibilityHint="前の質問に戻ります"
         >
           <Text style={styles.backButton} className="text-muted text-center">
             戻る

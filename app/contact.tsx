@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, ScrollView, Linking, Share , Platform, StyleSheet } from "react-native";
+import { Text, View, TouchableOpacity, ScrollView, Linking, Share, Alert, Platform, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 
@@ -44,16 +44,31 @@ export default function ContactScreen() {
     }
   };
 
-  const handleEmailContact = () => {
+  const handleEmailContact = async () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
+
     const subject = encodeURIComponent('Lincスクリーニング結果についてのご相談');
     const body = encodeURIComponent(generateContactText());
     const url = `mailto:?subject=${subject}&body=${body}`;
-    
-    Linking.openURL(url);
+
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert(
+          'エラー',
+          'メールアプリを開けませんでした。メールアプリが設定されているか確認してください。'
+        );
+      }
+    } catch {
+      Alert.alert(
+        'エラー',
+        'メールを開く際にエラーが発生しました。'
+      );
+    }
   };
 
   const handleBack = () => {
@@ -86,7 +101,7 @@ export default function ContactScreen() {
         </View>
 
         {/* 結果カード */}
-        <View className="bg-white rounded-2xl p-5 mb-6 border border-border">
+        <View className="bg-background rounded-2xl p-5 mb-6 border border-border">
           <View className="mb-4">
             <Text style={styles.label} className="text-muted mb-1">困りの内容</Text>
             <Text style={styles.value} className="text-foreground">{difficultyLabel}</Text>
@@ -109,6 +124,9 @@ export default function ContactScreen() {
           className="w-full py-4 rounded-xl bg-primary mb-3"
           style={styles.button}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="結果を共有する"
+          accessibilityHint="スクリーニング結果を他のアプリで共有します"
         >
           <Text style={styles.buttonText} className="text-white text-center">
             📤 結果を共有する
@@ -121,6 +139,9 @@ export default function ContactScreen() {
           className="w-full py-4 rounded-xl border-2 border-primary mb-6"
           style={styles.button}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="メールで問い合わせる"
+          accessibilityHint="メールアプリを開いて結果を送信します"
         >
           <Text style={styles.buttonTextOutline} className="text-primary text-center">
             ✉️ メールで問い合わせる
@@ -142,6 +163,9 @@ export default function ContactScreen() {
           onPress={handleBack}
           className="w-full py-3"
           activeOpacity={0.6}
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+          accessibilityHint="結果画面に戻ります"
         >
           <Text style={styles.backButton} className="text-muted text-center">
             戻る

@@ -103,9 +103,12 @@ export default function Step02Screen() {
         <View className="gap-4">
           <TouchableOpacity
             onPress={() => handleAnswer(true)}
-            className="w-full py-5 px-6 rounded-2xl border-2 border-primary bg-white"
+            className="w-full py-5 px-6 rounded-2xl border-2 border-primary bg-background"
             style={styles.answerCard}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="当てはまる"
+            accessibilityHint="この質問に当てはまると回答して次に進みます"
           >
             <Text style={styles.answerText} className="text-primary text-center">
               当てはまる
@@ -117,6 +120,9 @@ export default function Step02Screen() {
             className="w-full py-5 px-6 rounded-2xl border-2 border-border bg-surface"
             style={styles.answerCard}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="当てはまらない"
+            accessibilityHint="この質問に当てはまらないと回答して次に進みます"
           >
             <Text style={styles.answerText} className="text-muted text-center">
               当てはまらない
@@ -138,6 +144,9 @@ export default function Step02Screen() {
           onPress={handleBack}
           className="w-full py-3"
           activeOpacity={0.6}
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+          accessibilityHint="前の質問に戻ります"
         >
           <Text style={styles.backButton} className="text-muted text-center">
             戻る
