@@ -11,18 +11,18 @@ import {
 } from './screening-context';
 
 describe('STEP02 Questions', () => {
-  it('should have 6 writing questions', () => {
-    expect(STEP02_QUESTIONS.writing).toHaveLength(6);
+  it('should have 8 writing questions', () => {
+    expect(STEP02_QUESTIONS.writing).toHaveLength(8);
   });
 
-  it('should have 5 reading questions', () => {
-    expect(STEP02_QUESTIONS.reading).toHaveLength(5);
+  it('should have 7 reading questions', () => {
+    expect(STEP02_QUESTIONS.reading).toHaveLength(7);
   });
 });
 
 describe('STEP03 Questions', () => {
-  it('should have 6 phonology questions', () => {
-    expect(STEP03_QUESTIONS.phonology).toHaveLength(6);
+  it('should have 9 phonology questions', () => {
+    expect(STEP03_QUESTIONS.phonology).toHaveLength(9);
   });
 
   it('should have 3 eye questions', () => {
