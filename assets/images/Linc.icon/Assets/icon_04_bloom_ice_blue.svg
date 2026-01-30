@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- アイスブルーグラデーション -->
+    <linearGradient id="petalGradient1" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#E0F2FE" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#7DD3FC" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="petalGradient2" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#BAE6FD" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.8"/>
+    </linearGradient>
+    <!-- 中心グラデーション -->
+    <radialGradient id="centerBloom" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#F0F9FF" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#E0F2FE" stop-opacity="0.7"/>
+    </radialGradient>
+    <!-- ハイライト -->
+    <linearGradient id="petalHighlight" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- 外側の花びら -->
+  <ellipse cx="512" cy="220" rx="100" ry="180" fill="url(#petalGradient1)" opacity="0.8"/>
+  <ellipse cx="512" cy="804" rx="100" ry="180" fill="url(#petalGradient1)" opacity="0.8"/>
+  <ellipse cx="220" cy="512" rx="180" ry="100" fill="url(#petalGradient2)" opacity="0.8"/>
+  <ellipse cx="804" cy="512" rx="180" ry="100" fill="url(#petalGradient2)" opacity="0.8"/>
+  
+  <!-- 斜めの花びら -->
+  <ellipse cx="718" cy="306" rx="90" ry="160" fill="url(#petalGradient1)" opacity="0.7" transform="rotate(45 718 306)"/>
+  <ellipse cx="306" cy="306" rx="90" ry="160" fill="url(#petalGradient1)" opacity="0.7" transform="rotate(-45 306 306)"/>
+  <ellipse cx="718" cy="718" rx="90" ry="160" fill="url(#petalGradient2)" opacity="0.7" transform="rotate(-45 718 718)"/>
+  <ellipse cx="306" cy="718" rx="90" ry="160" fill="url(#petalGradient2)" opacity="0.7" transform="rotate(45 306 718)"/>
+  
+  <!-- 内側の花びら -->
+  <ellipse cx="512" cy="340" rx="70" ry="130" fill="url(#petalGradient1)" opacity="0.85"/>
+  <ellipse cx="512" cy="684" rx="70" ry="130" fill="url(#petalGradient1)" opacity="0.85"/>
+  <ellipse cx="340" cy="512" rx="130" ry="70" fill="url(#petalGradient2)" opacity="0.85"/>
+  <ellipse cx="684" cy="512" rx="130" ry="70" fill="url(#petalGradient2)" opacity="0.85"/>
+  
+  <!-- 中心 -->
+  <circle cx="512" cy="512" r="140" fill="url(#centerBloom)"/>
+  <ellipse cx="480" cy="470" rx="50" ry="35" fill="#FFFFFF" opacity="0.7"/>
+  
+  <!-- 花びらのハイライト -->
+  <ellipse cx="512" cy="180" rx="40" ry="60" fill="url(#petalHighlight)"/>
+  <ellipse cx="180" cy="512" rx="60" ry="40" fill="url(#petalHighlight)" transform="rotate(90 180 512)"/>
+</svg>
