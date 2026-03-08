@@ -6,7 +6,7 @@
 
 1. [https://snack.expo.dev](https://snack.expo.dev) を開く
 2. `Blank` テンプレートを作成
-3. 既存の `App.js` / `App.tsx` を、[`snack/App.tsx`](/Users/kh/GitHub/personal/linc-app/snack/App.tsx) の内容で置き換える
+3. 既存の `App.js` / `App.tsx` を、このリポジトリの [`snack/App.tsx`](App.tsx) の内容で置き換える
 4. Snack 右上の `Share` でURLを発行して共有
 
 ## 補足
@@ -15,3 +15,4 @@
 - `expo-router` ではなく単一ファイル内の状態遷移で画面遷移
 - `nativewind` は使わず `StyleSheet` のみで構成
 - API/認証/tRPC 連携は含めない（純粋にUIフロー確認用）
+- 本体の設問や判定ロジックを変更した場合は、Snack 用の `snack/App.tsx` も同様に更新する必要があります。
