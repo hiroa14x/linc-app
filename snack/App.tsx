@@ -21,15 +21,15 @@ const STEP02_QUESTIONS = {
     { id: "w1", text: "黒板を書き写すのが苦手、または遅いですか？" },
     { id: "w2", text: "図形や絵を見て、同じように書き写すのが苦手ですか？" },
     { id: "w3", text: "マス目や枠から、文字がはみ出すことがよくありますか？" },
-    { id: "w4", text: "ひらがなの50音表を、すらすら書くことが難しいですか？" },
-    { id: "w5", text: "自分の名前をひらがなで、正しく書くことが難しいですか？" },
+    { id: "w4", text: "ひらがなの50音表を、何も見ずにすらすら書くことができますか？" },
+    { id: "w5", text: "自分の名前をひらがなで、何も見ずに正しく書けますか？" },
     { id: "w6", text: "字を書くことを、嫌がりますか？" },
     { id: "w7", text: "ひらがな、カタカナを覚えるのに時間がかかりますか？" },
     { id: "w8", text: "文字を書くのに、時間がかかりますか？" },
   ],
   reading: [
     { id: "r1", text: "音読のとき、読む行を指で押さえながら読むことがよくありますか？" },
-    { id: "r2", text: "ひらがなの50音表を、すらすら読むことが難しいですか？" },
+    { id: "r2", text: "ひらがなの50音表を、すらすら読むことができますか？" },
     { id: "r3", text: "文字を読むことを、嫌がりますか？" },
     { id: "r4", text: "読むときに、1文字ずつ区切るように読むことがよくありますか？" },
     { id: "r5", text: "文末や助詞（は・が・を・に など）を正確に読むことが苦手ですか？" },
@@ -40,18 +40,18 @@ const STEP02_QUESTIONS = {
 
 const STEP03_QUESTIONS: Record<FactorType, { id: string; text: string; score: number }[]> = {
   phonology: [
-    { id: "p1", text: "しりとりが苦手ですか？", score: 5 },
+    { id: "p1", text: "しりとりができますか？", score: 5 },
     {
       id: "p2",
       text: "「りんご」は3文字、「しんぶんし」は5文字等、『ん』が入った時に文字数の把握が苦手ですか？",
       score: 5,
     },
-    { id: "p3", text: "「か」から始まる言葉を、5個以上言うことが難しいですか？", score: 2 },
-    { id: "p4", text: "「ぐりこ」などの、音の数だけ進む遊びが難しいですか？", score: 5 },
-    { id: "p5", text: "「がっこう」「まって」などの小さい「っ」を書き間違えますか？", score: 2 },
+    { id: "p3", text: "「か」から始まる言葉を、5個以上言えますか？", score: 2 },
+    { id: "p4", text: "「ぐりこ」などの、音の数だけ進む遊びで正しい音の数だけ進めますか？", score: 5 },
+    { id: "p5", text: "「がっこう」「まって」などの小さい「っ」を書き間違えたり、書かないとこがありますか？", score: 2 },
     { id: "p6", text: "ひらがなを「あ」から「ん」まで、順番に言うことが難しいですか？", score: 5 },
-    { id: "p7", text: "「からおけ」の2つ目の音（「ら」）を答えることが難しいですか？", score: 5 },
-    { id: "p8", text: "「さかな」を逆から言うことが難しいですか？", score: 5 },
+    { id: "p7", text: "単語の途中と音を答えることができますか？例:「からおけ」の2つ目の音は？答え:「ら」", score: 5 },
+    { id: "p8", text: "「さかな」を逆から言えますか？", score: 5 },
     { id: "p9", text: "「うれも」を逆から言うことが難しいですか？", score: 5 },
   ],
   eye: [
@@ -82,6 +82,16 @@ const FACTOR_NAMES: Record<FactorType, string> = {
   visualPerception: "視知覚",
   automation: "自動化",
 };
+
+// STEP02で「NO」のときにカウントする設問（肯定形「できますか？」など）
+const STEP02_INVERTED_IDS = new Set(["w4", "w5", "r2"]);
+// STEP03で「NO」のときにカウントする設問（肯定形「できますか？」など）
+const STEP03_INVERTED_IDS = new Set(["p1", "p3", "p4", "p7", "p8"]);
+
+function step02Counts(answers: Record<string, boolean>, id: string): boolean {
+  const v = answers[id];
+  return STEP02_INVERTED_IDS.has(id) ? !v : !!v;
+}
 
 const PREFECTURES = [
   "北海道",
@@ -140,12 +150,12 @@ function calculateCandidateFactors(
   const factors = new Set<FactorType>();
 
   if (difficultyType === "writing" || difficultyType === "both") {
-    const w1 = answers.w1;
-    const w2 = answers.w2;
-    const w3 = answers.w3;
-    const w4 = answers.w4;
-    const w5 = answers.w5;
-    const w6 = answers.w6;
+    const w1 = step02Counts(answers, "w1");
+    const w2 = step02Counts(answers, "w2");
+    const w3 = step02Counts(answers, "w3");
+    const w4 = step02Counts(answers, "w4");
+    const w5 = step02Counts(answers, "w5");
+    const w6 = step02Counts(answers, "w6");
 
     if (w1 || w4 || w5 || w6) {
       factors.add("phonology");
@@ -163,11 +173,11 @@ function calculateCandidateFactors(
   }
 
   if (difficultyType === "reading" || difficultyType === "both") {
-    const r1 = answers.r1;
-    const r2 = answers.r2;
-    const r3 = answers.r3;
-    const r4 = answers.r4;
-    const r5 = answers.r5;
+    const r1 = step02Counts(answers, "r1");
+    const r2 = step02Counts(answers, "r2");
+    const r3 = step02Counts(answers, "r3");
+    const r4 = step02Counts(answers, "r4");
+    const r5 = step02Counts(answers, "r5");
 
     if (r2 || r3 || r4 || r5) {
       factors.add("phonology");
@@ -198,7 +208,8 @@ function calculateResultFactors(
     if (factor === "automation") continue;
     let totalScore = 0;
     for (const q of STEP03_QUESTIONS[factor]) {
-      if (answers[q.id]) totalScore += q.score;
+      const counts = STEP03_INVERTED_IDS.has(q.id) ? !answers[q.id] : answers[q.id];
+      if (counts) totalScore += q.score;
     }
     if (totalScore >= 5) resultFactors.push(factor);
   }

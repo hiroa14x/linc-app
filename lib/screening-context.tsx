@@ -16,15 +16,15 @@ export const STEP02_QUESTIONS = {
     { id: 'w1', text: '黒板を書き写すのが苦手、または遅いですか？' },
     { id: 'w2', text: '図形や絵を見て、同じように書き写すのが苦手ですか？' },
     { id: 'w3', text: 'マス目や枠から、文字がはみ出すことがよくありますか？' },
-    { id: 'w4', text: 'ひらがなの50音表を、すらすら書くことが難しいですか？' },
-    { id: 'w5', text: '自分の名前をひらがなで、正しく書くことが難しいですか？' },
+    { id: 'w4', text: 'ひらがなの50音表を、何も見ずにすらすら書くことができますか？' },
+    { id: 'w5', text: '自分の名前をひらがなで、何も見ずに正しく書けますか？' },
     { id: 'w6', text: '字を書くことを、嫌がりますか？' },
     { id: 'w7', text: 'ひらがな、カタカナを覚えるのに時間がかかりますか？' },
     { id: 'w8', text: '文字を書くのに、時間がかかりますか？' },
   ],
   reading: [
     { id: 'r1', text: '音読のとき、読む行を指で押さえながら読むことがよくありますか？' },
-    { id: 'r2', text: 'ひらがなの50音表を、すらすら読むことが難しいですか？' },
+    { id: 'r2', text: 'ひらがなの50音表を、すらすら読むことができますか？' },
     { id: 'r3', text: '文字を読むことを、嫌がりますか？' },
     { id: 'r4', text: '読むときに、1文字ずつ区切るように読むことがよくありますか？' },
     { id: 'r5', text: '文末や助詞（は・が・を・に など）を正確に読むことが苦手ですか？' },
@@ -36,14 +36,14 @@ export const STEP02_QUESTIONS = {
 // STEP03の設問（要因別）
 export const STEP03_QUESTIONS: Record<FactorType, { id: string; text: string; score: number }[]> = {
   phonology: [
-    { id: 'p1', text: 'しりとりが苦手ですか？', score: 5 },
+    { id: 'p1', text: 'しりとりができますか？', score: 5 },
     { id: 'p2', text: '「りんご」は3文字、「しんぶんし」は5文字等、『ん』が入った時に文字数の把握が苦手ですか？', score: 5 },
-    { id: 'p3', text: '「か」から始まる言葉を、5個以上言うことが難しいですか？', score: 2 },
-    { id: 'p4', text: '「ぐりこ」などの、音の数だけ進む遊びが難しいですか？', score: 5 },
-    { id: 'p5', text: '「がっこう」「まって」などの小さい「っ」を書き間違えますか？', score: 2 },
+    { id: 'p3', text: '「か」から始まる言葉を、5個以上言えますか？', score: 2 },
+    { id: 'p4', text: '「ぐりこ」などの、音の数だけ進む遊びで正しい音の数だけ進めますか？', score: 5 },
+    { id: 'p5', text: '「がっこう」「まって」などの小さい「っ」を書き間違えたり、書かないとこがありますか？', score: 2 },
     { id: 'p6', text: 'ひらがなを「あ」から「ん」まで、順番に言うことが難しいですか？', score: 5 },
-    { id: 'p7', text: '「からおけ」の2つ目の音（「ら」）を答えることが難しいですか？', score: 5 },
-    { id: 'p8', text: '「さかな」を逆から言うことが難しいですか？', score: 5 },
+    { id: 'p7', text: '単語の途中と音を答えることができますか？例:「からおけ」の2つ目の音は？答え:「ら」', score: 5 },
+    { id: 'p8', text: '「さかな」を逆から言えますか？', score: 5 },
     { id: 'p9', text: '「うれも」を逆から言うことが難しいですか？', score: 5 },
   ],
   eye: [
@@ -211,6 +211,16 @@ export function useScreening() {
   return context;
 }
 
+// STEP02で「NO」のときにカウントする設問（肯定形「できますか？」など）
+const STEP02_INVERTED_IDS = new Set(['w4', 'w5', 'r2']);
+// STEP03で「NO」のときにカウントする設問（肯定形「できますか？」など）
+const STEP03_INVERTED_IDS = new Set(['p1', 'p3', 'p4', 'p7', 'p8']);
+
+function step02Counts(answers: Record<string, boolean>, id: string): boolean {
+  const v = answers[id];
+  return STEP02_INVERTED_IDS.has(id) ? !v : !!v;
+}
+
 // STEP02の要因候補分類ロジック
 export function calculateCandidateFactors(
   difficultyType: DifficultyType,
@@ -219,13 +229,13 @@ export function calculateCandidateFactors(
   const factors = new Set<FactorType>();
 
   if (difficultyType === 'writing' || difficultyType === 'both') {
-    // 書くの判定
-    const w1 = answers['w1']; // 黒板を写すのが苦手
-    const w2 = answers['w2']; // 図形模写が苦手
-    const w3 = answers['w3']; // 枠からはみ出る
-    const w4 = answers['w4']; // 50音表が書けない
-    const w5 = answers['w5']; // 名前が書けない
-    const w6 = answers['w6']; // 書くのを嫌がる
+    // 書くの判定（w4,w5はNOでカウント）
+    const w1 = step02Counts(answers, 'w1'); // 黒板を写すのが苦手
+    const w2 = step02Counts(answers, 'w2'); // 図形模写が苦手
+    const w3 = step02Counts(answers, 'w3'); // 枠からはみ出る
+    const w4 = step02Counts(answers, 'w4'); // 50音表が書けない（NOでカウント）
+    const w5 = step02Counts(answers, 'w5'); // 名前が書けない（NOでカウント）
+    const w6 = step02Counts(answers, 'w6'); // 書くのを嫌がる
 
     if (w1 || w4 || w5 || w6) {
       // ①のパターン
@@ -246,12 +256,12 @@ export function calculateCandidateFactors(
   }
 
   if (difficultyType === 'reading' || difficultyType === 'both') {
-    // 読むの判定
-    const r1 = answers['r1']; // 指で追いながら読む
-    const r2 = answers['r2']; // 50音表が読めない
-    const r3 = answers['r3']; // 読むのを嫌がる
-    const r4 = answers['r4']; // 逐次読み
-    const r5 = answers['r5']; // 助詞が苦手
+    // 読むの判定（r2はNOでカウント）
+    const r1 = step02Counts(answers, 'r1'); // 指で追いながら読む
+    const r2 = step02Counts(answers, 'r2'); // 50音表が読めない（NOでカウント）
+    const r3 = step02Counts(answers, 'r3'); // 読むのを嫌がる
+    const r4 = step02Counts(answers, 'r4'); // 逐次読み
+    const r5 = step02Counts(answers, 'r5'); // 助詞が苦手
 
     if (r2 || r3 || r4 || r5) {
       // ①のパターン
@@ -289,7 +299,8 @@ export function calculateResultFactors(
     let totalScore = 0;
 
     for (const q of questions) {
-      if (answers[q.id]) {
+      const counts = STEP03_INVERTED_IDS.has(q.id) ? !answers[q.id] : answers[q.id];
+      if (counts) {
         totalScore += q.score;
       }
     }
