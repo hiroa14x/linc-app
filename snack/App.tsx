@@ -222,13 +222,6 @@ function calculateCandidateFactors(
   return Array.from(factors);
 }
 
-function getDevelopmentalNote(resultFactors: FactorType[]): string {
-  if (resultFactors.includes("rigidity") || resultFactors.includes("attention")) {
-    return "こだわり/注意力が読み書きに影響を与えている可能性があります。";
-  }
-  return "";
-}
-
 function calculateResultFactors(
   candidateFactors: FactorType[],
   answers: Record<string, boolean>,
@@ -530,8 +523,7 @@ export default function App() {
   }
 
   if (route === "result") {
-    const factorLabels = resultFactors.map((f) => FACTOR_NAMES[f]).join("・");
-    const developmentalNote = getDevelopmentalNote(resultFactors);
+    const factorLabels = resultFactors.map((f) => FACTOR_NAMES[f]).join("・");    
     return (
       <SafeAreaView style={styles.container}>
         <Progress value={100} label="STEP 4/4 完了" />
@@ -551,13 +543,6 @@ export default function App() {
               による支援をおすすめします。
             </Text>
           </View>
-          {developmentalNote ? (
-            <View style={styles.card}>
-              <Text style={styles.cardBody}>
-                <Text style={styles.highlight}>{developmentalNote}</Text>
-              </Text>
-            </View>
-          ) : null}
           <TouchableOpacity style={styles.primaryButton} onPress={() => setRoute("map")}>
             <Text style={styles.primaryButtonText}>近隣の支援機関を探す</Text>
           </TouchableOpacity>

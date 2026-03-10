@@ -8,7 +8,6 @@ import {
   useScreening,
   getDifficultyTypeLabel,
   getSpecialistLabel,
-  getDevelopmentalNote,
   FACTOR_NAMES,
 } from "@/lib/screening-context";
 
@@ -21,7 +20,6 @@ export default function ResultScreen() {
   const difficultyLabel = getDifficultyTypeLabel(state.difficultyType);
   const specialistLabel = getSpecialistLabel(state.specialist);
   const factorLabels = state.resultFactors.map(f => FACTOR_NAMES[f]).join('・');
-  const developmentalNote = getDevelopmentalNote(state.resultFactors);
 
   const handleMapSearch = () => {
     if (Platform.OS !== "web") {
@@ -88,14 +86,6 @@ export default function ResultScreen() {
             <Text style={styles.highlight} className="text-primary">{specialistLabel}</Text>による支援をおすすめします。
           </Text>
         </View>
-
-        {developmentalNote ? (
-          <View className="mb-6 px-1">
-            <Text style={styles.body} className="text-foreground">
-              <Text style={styles.highlight} className="text-primary">{developmentalNote}</Text>
-            </Text>
-          </View>
-        ) : null}
 
         {/* Primary CTA - Button lg (16px) */}
         <TouchableOpacity
