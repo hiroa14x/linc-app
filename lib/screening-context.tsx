@@ -5,7 +5,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export type DifficultyType = 'writing' | 'reading' | 'both' | null;
 
 // 要因タイプ
-export type FactorType = 'phonology' | 'eye' | 'motor' | 'visualPerception' | 'automation';
+export type FactorType =
+  | 'phonology'
+  | 'eye'
+  | 'motor'
+  | 'visualPerception'
+  | 'automation'
+  | 'rigidity'
+  | 'attention';
 
 // 専門職タイプ
 export type SpecialistType = 'ST' | 'OT' | 'both' | null;
@@ -64,6 +71,19 @@ export const STEP03_QUESTIONS: Record<FactorType, { id: string; text: string; sc
     { id: 'v4', text: '文字を左右反対（鏡文字）に書くことがありますか？', score: 5 },
     { id: 'v5', text: '書き順が毎回バラバラになりやすいですか？', score: 2 },
   ],
+  rigidity: [
+    { id: 'rd1', text: '文字の形にこだわり、書くことが進みにくですか？', score: 5 },
+    { id: 'rd2', text: '間違いたくないというこだわりを強く持っていますか？', score: 2 },
+    { id: 'rd3', text: '興味のない課題や授業は受けようとしないですか？', score: 2 },
+    { id: 'rd4', text: 'なぞり書きの時にはみ出さないように強くこだわりますか？', score: 2 },
+  ],
+  attention: [
+    { id: 'ad1', text: '注意は逸れやすいですか？', score: 5 },
+    { id: 'ad2', text: '整理整頓が苦手ですか？', score: 2 },
+    { id: 'ad3', text: '忘れ物が多いですか？', score: 2 },
+    { id: 'ad4', text: 'ケアレスミスが多いですか？', score: 2 },
+    { id: 'ad5', text: '文字を書いている時に他のことをし出すことが多いですか？', score: 2 },
+  ],
   automation: [],
 };
 
@@ -73,6 +93,8 @@ export const FACTOR_NAMES: Record<FactorType, string> = {
   eye: '眼球運動',
   motor: '運動',
   visualPerception: '視知覚',
+  rigidity: 'こだわり',
+  attention: '注意',
   automation: '自動化',
 };
 
@@ -282,6 +304,10 @@ export function calculateCandidateFactors(
     }
   }
 
+  // こだわり・注意は常にSTEP03で質問する
+  factors.add('rigidity');
+  factors.add('attention');
+
   return Array.from(factors);
 }
 
@@ -359,4 +385,13 @@ export function getSpecialistLabel(specialist: SpecialistType): string {
     default:
       return '';
   }
+}
+
+// こだわり/注意が結果に含まれるときの補足文言（専門職には繋げない）
+export function getDevelopmentalNote(resultFactors: FactorType[]): string {
+  const hasRigidityOrAttention =
+    resultFactors.includes('rigidity') || resultFactors.includes('attention');
+  return hasRigidityOrAttention
+    ? 'こだわり/注意力が読み書きに影響を与えている可能性があります。'
+    : '';
 }

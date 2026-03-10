@@ -5,6 +5,7 @@ import {
   determineSpecialist,
   getDifficultyTypeLabel,
   getSpecialistLabel,
+  getDevelopmentalNote,
   STEP02_QUESTIONS,
   STEP03_QUESTIONS,
   FACTOR_NAMES,
@@ -35,6 +36,14 @@ describe('STEP03 Questions', () => {
 
   it('should have 5 visualPerception questions', () => {
     expect(STEP03_QUESTIONS.visualPerception).toHaveLength(5);
+  });
+
+  it('should have 4 rigidity questions', () => {
+    expect(STEP03_QUESTIONS.rigidity).toHaveLength(4);
+  });
+
+  it('should have 5 attention questions', () => {
+    expect(STEP03_QUESTIONS.attention).toHaveLength(5);
   });
 
   it('should have 0 automation questions', () => {
@@ -80,38 +89,44 @@ describe('calculateCandidateFactors', () => {
       expect(factors).toContain('automation');
     });
 
-    it('should return eye/motor/visualPerception when only w2 (図形模写) is true', () => {
+    it('should return eye/motor/visualPerception and always rigidity/attention when only w2 (図形模写) is true', () => {
       const factors = calculateCandidateFactors('writing', { w2: true });
       expect(factors).toContain('eye');
       expect(factors).toContain('motor');
       expect(factors).toContain('visualPerception');
-      expect(factors).not.toContain('phonology');
-      expect(factors).not.toContain('automation');
+      expect(factors).toContain('rigidity');
+      expect(factors).toContain('attention');
     });
 
-    it('should return eye/motor/visualPerception when only w3 (枠からはみ出る) is true', () => {
+    it('should return eye/motor/visualPerception and always rigidity/attention when only w3 (枠からはみ出る) is true', () => {
       const factors = calculateCandidateFactors('writing', { w3: true });
       expect(factors).toContain('eye');
       expect(factors).toContain('motor');
       expect(factors).toContain('visualPerception');
-      expect(factors).not.toContain('phonology');
-      expect(factors).not.toContain('automation');
+      expect(factors).toContain('rigidity');
+      expect(factors).toContain('attention');
     });
 
-    it('should return only automation when all answers are false', () => {
+    it('should return automation and always rigidity and attention when all answers are false', () => {
       const factors = calculateCandidateFactors('writing', {});
-      expect(factors).toEqual(['automation']);
+      expect(factors).toContain('automation');
+      expect(factors).toContain('rigidity');
+      expect(factors).toContain('attention');
+      expect(factors.length).toBeGreaterThanOrEqual(3);
     });
   });
 
   describe('reading difficulty', () => {
     it('should return all factors when r2 (50音表読めない) is true', () => {
-      const factors = calculateCandidateFactors('reading', { r2: true });
+      // r2 is inverted: NO counts. So r2: true means "can read" -> not counted. So we need r2: false for "cannot read"
+      const factors = calculateCandidateFactors('reading', { r2: false });
       expect(factors).toContain('phonology');
       expect(factors).toContain('eye');
       expect(factors).toContain('motor');
       expect(factors).toContain('visualPerception');
       expect(factors).toContain('automation');
+      expect(factors).toContain('rigidity');
+      expect(factors).toContain('attention');
     });
 
     it('should return all factors when r3 (読むのを嫌がる) is true', () => {
@@ -141,18 +156,22 @@ describe('calculateCandidateFactors', () => {
       expect(factors).toContain('automation');
     });
 
-    it('should return phonology/eye/motor/automation when only r1 (指で追いながら読む) is true', () => {
+    it('should return phonology/eye/motor/automation and always rigidity/attention when only r1 (指で追いながら読む) is true', () => {
       const factors = calculateCandidateFactors('reading', { r1: true });
       expect(factors).toContain('phonology');
       expect(factors).toContain('eye');
       expect(factors).toContain('motor');
       expect(factors).toContain('automation');
-      expect(factors).not.toContain('visualPerception');
+      expect(factors).toContain('rigidity');
+      expect(factors).toContain('attention');
     });
 
-    it('should return only automation when all answers are false', () => {
+    it('should return automation and always rigidity and attention when all answers are false', () => {
       const factors = calculateCandidateFactors('reading', {});
-      expect(factors).toEqual(['automation']);
+      expect(factors).toContain('automation');
+      expect(factors).toContain('rigidity');
+      expect(factors).toContain('attention');
+      expect(factors.length).toBeGreaterThanOrEqual(3);
     });
   });
 
@@ -176,8 +195,19 @@ describe('calculateResultFactors', () => {
   });
 
   it('should return automation when no factor reaches 5 points', () => {
-    // p3 has score 2, not enough
-    const factors = calculateResultFactors(['phonology'], { p3: true });
+    // No phonology question adds score: inverted (p1,p3,p4,p7,p8) need true to not count, others need false.
+    const noScoreAnswers = {
+      p1: true,
+      p2: false,
+      p3: true,
+      p4: true,
+      p5: false,
+      p6: false,
+      p7: true,
+      p8: true,
+      p9: false,
+    };
+    const factors = calculateResultFactors(['phonology'], noScoreAnswers);
     expect(factors).toEqual(['automation']);
   });
 
@@ -266,6 +296,33 @@ describe('FACTOR_NAMES', () => {
     expect(FACTOR_NAMES.eye).toBe('眼球運動');
     expect(FACTOR_NAMES.motor).toBe('運動');
     expect(FACTOR_NAMES.visualPerception).toBe('視知覚');
+    expect(FACTOR_NAMES.rigidity).toBe('こだわり');
+    expect(FACTOR_NAMES.attention).toBe('注意');
     expect(FACTOR_NAMES.automation).toBe('自動化');
+  });
+});
+
+describe('getDevelopmentalNote', () => {
+  it('should return note when resultFactors includes rigidity', () => {
+    expect(getDevelopmentalNote(['rigidity'])).toBe(
+      'こだわり/注意力が読み書きに影響を与えている可能性があります。',
+    );
+  });
+
+  it('should return note when resultFactors includes attention', () => {
+    expect(getDevelopmentalNote(['attention'])).toBe(
+      'こだわり/注意力が読み書きに影響を与えている可能性があります。',
+    );
+  });
+
+  it('should return note when resultFactors includes both', () => {
+    expect(getDevelopmentalNote(['phonology', 'rigidity', 'attention'])).toBe(
+      'こだわり/注意力が読み書きに影響を与えている可能性があります。',
+    );
+  });
+
+  it('should return empty string when resultFactors has neither', () => {
+    expect(getDevelopmentalNote(['phonology', 'eye'])).toBe('');
+    expect(getDevelopmentalNote([])).toBe('');
   });
 });

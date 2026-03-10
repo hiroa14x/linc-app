@@ -12,7 +12,14 @@ import {
 } from "react-native";
 
 type DifficultyType = "writing" | "reading" | "both" | null;
-type FactorType = "phonology" | "eye" | "motor" | "visualPerception" | "automation";
+type FactorType =
+  | "phonology"
+  | "eye"
+  | "motor"
+  | "visualPerception"
+  | "automation"
+  | "rigidity"
+  | "attention";
 type SpecialistType = "ST" | "OT" | "both" | null;
 type RouteName = "onboarding" | "step01" | "step02" | "step03" | "result" | "map" | "contact";
 
@@ -72,6 +79,19 @@ const STEP03_QUESTIONS: Record<FactorType, { id: string; text: string; score: nu
     { id: "v4", text: "文字を左右反対（鏡文字）に書くことがありますか？", score: 5 },
     { id: "v5", text: "書き順が毎回バラバラになりやすいですか？", score: 2 },
   ],
+  rigidity: [
+    { id: "rd1", text: "文字の形にこだわり、書くことが進みにくですか？", score: 5 },
+    { id: "rd2", text: "間違いたくないというこだわりを強く持っていますか？", score: 2 },
+    { id: "rd3", text: "興味のない課題や授業は受けようとしないですか？", score: 2 },
+    { id: "rd4", text: "なぞり書きの時にはみ出さないように強くこだわりますか？", score: 2 },
+  ],
+  attention: [
+    { id: "ad1", text: "注意は逸れやすいですか？", score: 5 },
+    { id: "ad2", text: "整理整頓が苦手ですか？", score: 2 },
+    { id: "ad3", text: "忘れ物が多いですか？", score: 2 },
+    { id: "ad4", text: "ケアレスミスが多いですか？", score: 2 },
+    { id: "ad5", text: "文字を書いている時に他のことをし出すことが多いですか？", score: 2 },
+  ],
   automation: [],
 };
 
@@ -80,6 +100,8 @@ const FACTOR_NAMES: Record<FactorType, string> = {
   eye: "眼球運動",
   motor: "運動",
   visualPerception: "視知覚",
+  rigidity: "こだわり",
+  attention: "注意",
   automation: "自動化",
 };
 
@@ -195,7 +217,16 @@ function calculateCandidateFactors(
     }
   }
 
+  factors.add("rigidity");
+  factors.add("attention");
   return Array.from(factors);
+}
+
+function getDevelopmentalNote(resultFactors: FactorType[]): string {
+  if (resultFactors.includes("rigidity") || resultFactors.includes("attention")) {
+    return "こだわり/注意力が読み書きに影響を与えている可能性があります。";
+  }
+  return "";
 }
 
 function calculateResultFactors(
@@ -500,6 +531,7 @@ export default function App() {
 
   if (route === "result") {
     const factorLabels = resultFactors.map((f) => FACTOR_NAMES[f]).join("・");
+    const developmentalNote = getDevelopmentalNote(resultFactors);
     return (
       <SafeAreaView style={styles.container}>
         <Progress value={100} label="STEP 4/4 完了" />
@@ -519,6 +551,13 @@ export default function App() {
               による支援をおすすめします。
             </Text>
           </View>
+          {developmentalNote ? (
+            <View style={styles.card}>
+              <Text style={styles.cardBody}>
+                <Text style={styles.highlight}>{developmentalNote}</Text>
+              </Text>
+            </View>
+          ) : null}
           <TouchableOpacity style={styles.primaryButton} onPress={() => setRoute("map")}>
             <Text style={styles.primaryButtonText}>近隣の支援機関を探す</Text>
           </TouchableOpacity>
