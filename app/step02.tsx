@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import { 
   useScreening, 
-  STEP02_QUESTIONS, 
+  getStep02Questions,
   calculateCandidateFactors 
 } from "@/lib/screening-context";
 
@@ -16,14 +16,7 @@ export default function Step02Screen() {
 
   // 現在の苦手タイプに応じた質問リストを取得
   const questions = useMemo(() => {
-    if (state.difficultyType === 'writing') {
-      return STEP02_QUESTIONS.writing;
-    } else if (state.difficultyType === 'reading') {
-      return STEP02_QUESTIONS.reading;
-    } else if (state.difficultyType === 'both') {
-      return [...STEP02_QUESTIONS.writing, ...STEP02_QUESTIONS.reading];
-    }
-    return [];
+    return getStep02Questions(state.difficultyType);
   }, [state.difficultyType]);
 
   const currentQuestion = questions[state.step02Index];

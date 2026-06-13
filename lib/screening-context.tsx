@@ -17,74 +17,316 @@ export type FactorType =
 // 専門職タイプ
 export type SpecialistType = 'ST' | 'OT' | 'both' | null;
 
-// STEP02の設問
-export const STEP02_QUESTIONS = {
-  writing: [
-    { id: 'w1', text: '黒板を書き写すのが苦手、または遅いですか？' },
-    { id: 'w2', text: '図形や絵を見て、同じように書き写すのが苦手ですか？' },
-    { id: 'w3', text: 'マス目や枠から、文字がはみ出すことがよくありますか？' },
-    { id: 'w4', text: 'ひらがなの50音表を、何も見ずにすらすら書くことができますか？' },
-    { id: 'w5', text: '自分の名前をひらがなで、何も見ずに正しく書けますか？' },
-    { id: 'w6', text: '字を書くことを、嫌がりますか？' },
-    { id: 'w7', text: 'ひらがな、カタカナを覚えるのに時間がかかりますか？' },
-    { id: 'w8', text: '文字を書くのに、時間がかかりますか？' },
-  ],
+type DifficultyKey = Exclude<DifficultyType, null>;
+type CountWhen = 'yes' | 'no';
+
+export type Step02Question = {
+  id: string;
+  text: string;
+  factors: FactorType[];
+  countsWhen?: CountWhen;
+};
+
+export type Step03Question = {
+  id: string;
+  text: string;
+  score: number;
+  countsWhen?: CountWhen;
+};
+
+export type Step03QuestionWithFactor = Step03Question & {
+  factor: FactorType;
+};
+
+const FACTOR_ORDER: FactorType[] = [
+  'phonology',
+  'eye',
+  'motor',
+  'visualPerception',
+  'automation',
+  'rigidity',
+  'attention',
+];
+
+const ALWAYS_ASK_FACTORS: FactorType[] = ['rigidity', 'attention'];
+const SCORE_THRESHOLD = 5;
+
+// STEP02の設問（小1後半シート由来）
+export const STEP02_QUESTIONS: Record<DifficultyKey, Step02Question[]> = {
   reading: [
-    { id: 'r1', text: '音読のとき、読む行を指で押さえながら読むことがよくありますか？' },
-    { id: 'r2', text: 'ひらがなの50音表を、すらすら読むことができますか？' },
-    { id: 'r3', text: '文字を読むことを、嫌がりますか？' },
-    { id: 'r4', text: '読むときに、1文字ずつ区切るように読むことがよくありますか？' },
-    { id: 'r5', text: '文末や助詞（は・が・を・に など）を正確に読むことが苦手ですか？' },
-    { id: 'r6', text: '読み間違えや、勝手な推測で読んでしまうことが多いですか？' },
-    { id: 'r7', text: '音読で、つっかえることがよくありますか？' },
+    {
+      id: 'r1',
+      text: '音読の際、読む行を指で押さえながら読むことがよくありますか？',
+      factors: ['phonology', 'eye', 'automation'],
+    },
+    {
+      id: 'r2',
+      text: '字を読むことを嫌がりますか？',
+      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'r3',
+      text: '逐次読みをしますか？',
+      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'r4',
+      text: '文末や助詞を正確に読むことが苦手ですか？',
+      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'r5',
+      text: '読む時に読み間違えが多い、勝手読みをしますか？',
+      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'r6',
+      text: '音読でつっかえてしまいますか？',
+      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
+    },
+  ],
+  writing: [
+    {
+      id: 'w1',
+      text: '黒板を写すのが苦手、または遅いですか？',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'w2',
+      text: '図形や文字を見て同じように書き写すことが苦手ですか？',
+      factors: ['eye', 'motor', 'visualPerception'],
+    },
+    {
+      id: 'w3',
+      text: 'マス目や枠から文字がはみ出ることがよくありますか？',
+      factors: ['eye', 'motor', 'visualPerception'],
+    },
+    {
+      id: 'w4',
+      text: '自分の名前をひらがなで正しく書くことができますか？',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+      countsWhen: 'no',
+    },
+    {
+      id: 'w5',
+      text: '字を書くことを嫌がりますか？',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'w6',
+      text: 'ひらがな、カタカナを覚えられませんか？（読みも書きもできない）',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'w7',
+      text: 'ひらがな、カタカナを覚えられませんか？（読めるが書けない）',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'w8',
+      text: '文字を書くのに時間がかかりますか？',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+    },
+  ],
+  both: [
+    {
+      id: 'b1',
+      text: '音読の際、読む行を指で押さえながら読むことがよくありますか？',
+      factors: ['phonology', 'eye', 'automation'],
+    },
+    {
+      id: 'b2',
+      text: '字を読むことを嫌がりますか？',
+      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'b3',
+      text: '逐次読みをしますか？',
+      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'b4',
+      text: '文末や助詞を正確に読むことが苦手ですか？',
+      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'b5',
+      text: '読む時に読み間違えが多い、勝手読みをしますか？',
+      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'b6',
+      text: '音読でつっかえてしまいますか？',
+      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'b7',
+      text: '黒板を写すのが苦手、または遅いですか？',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'b8',
+      text: '図形や文字を見て同じように書き写すことが苦手ですか？',
+      factors: ['eye', 'motor', 'visualPerception'],
+    },
+    {
+      id: 'b9',
+      text: 'マス目や枠から文字がはみ出ることがよくありますか？',
+      factors: ['eye', 'motor', 'visualPerception'],
+    },
+    {
+      id: 'b10',
+      text: '自分の名前をひらがなで正しく書くことができますか？',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+      countsWhen: 'no',
+    },
+    {
+      id: 'b11',
+      text: '字を書くことを嫌がりますか？',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'b12',
+      text: 'ひらがな、カタカナを覚えられませんか？（読みも書きもできない）',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'b13',
+      text: 'ひらがな、カタカナを覚えられませんか？（読めるが書けない）',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+    },
+    {
+      id: 'b14',
+      text: '文字を書くのに時間がかかりますか？',
+      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
+    },
   ],
 };
 
-// STEP03の設問（要因別）
-export const STEP03_QUESTIONS: Record<FactorType, { id: string; text: string; score: number }[]> = {
-  phonology: [
-    { id: 'p1', text: 'しりとりができますか？', score: 5 },
-    { id: 'p2', text: '「りんご」は3文字、「しんぶんし」は5文字等、『ん』が入った時に文字数の把握が苦手ですか？', score: 5 },
-    { id: 'p3', text: '「か」から始まる言葉を、5個以上言えますか？', score: 2 },
-    { id: 'p4', text: '「ぐりこ」などの、音の数だけ進む遊びで正しい音の数だけ進めますか？', score: 5 },
-    { id: 'p5', text: '「がっこう」「まって」などの小さい「っ」を書き間違えたり、書かないとこがありますか？', score: 2 },
-    { id: 'p6', text: 'ひらがなを「あ」から「ん」まで、順番に言うことが難しいですか？', score: 5 },
-    { id: 'p7', text: '単語の途中と音を答えることができますか？例:「からおけ」の2つ目の音は？答え:「ら」', score: 5 },
-    { id: 'p8', text: '「さかな」を逆から言えますか？', score: 5 },
-    { id: 'p9', text: '「うれも」を逆から言うことが難しいですか？', score: 5 },
-  ],
-  eye: [
-    { id: 'e1', text: '読むときに、行を飛ばしたり同じ行をまた読んだりしますか？', score: 5 },
-    { id: 'e2', text: 'ボールを受けるのが苦手ですか？', score: 2 },
-    { id: 'e3', text: '動くものを目で追うのが苦手ですか？', score: 2 },
-  ],
-  motor: [
-    { id: 'm1', text: '字を書くとき、指先より手首や腕を大きく動かしますか？', score: 5 },
-    { id: 'm2', text: 'はさみで線に沿って切ったり、線をなぞったりする作業が苦手ですか？', score: 5 },
-    { id: 'm3', text: '座って書いていると、体が動いて姿勢が崩れやすいですか？', score: 5 },
-    { id: 'm4', text: '字を書くとき、筆圧が強すぎたり弱すぎたりしますか？', score: 2 },
-  ],
-  visualPerception: [
-    { id: 'v1', text: '枠がないと、文字の大きさや位置がバラバラになりやすいですか？', score: 1 },
-    { id: 'v2', text: '似た形の文字（例：さ/き、ぬ/め）を読み間違えることがよくありますか？', score: 5 },
-    { id: 'v3', text: '目の前の物でも、探すのに時間がかかりますか？', score: 2 },
-    { id: 'v4', text: '文字を左右反対（鏡文字）に書くことがありますか？', score: 5 },
-    { id: 'v5', text: '書き順が毎回バラバラになりやすいですか？', score: 2 },
-  ],
-  rigidity: [
-    { id: 'rd1', text: '文字の形にこだわり、書くことが進みにくですか？', score: 5 },
-    { id: 'rd2', text: '間違いたくないというこだわりを強く持っていますか？', score: 2 },
-    { id: 'rd3', text: '興味のない課題や授業は受けようとしないですか？', score: 2 },
-    { id: 'rd4', text: 'なぞり書きの時にはみ出さないように強くこだわりますか？', score: 2 },
-  ],
-  attention: [
-    { id: 'ad1', text: '注意は逸れやすいですか？', score: 5 },
-    { id: 'ad2', text: '整理整頓が苦手ですか？', score: 2 },
-    { id: 'ad3', text: '忘れ物が多いですか？', score: 2 },
-    { id: 'ad4', text: 'ケアレスミスが多いですか？', score: 2 },
-    { id: 'ad5', text: '文字を書いている時に他のことをし出すことが多いですか？', score: 2 },
-  ],
-  automation: [],
+const READING_PHONOLOGY_QUESTIONS: Step03Question[] = [
+  { id: 'phonology-shiritori', text: 'しりとりができますか？', score: 5, countsWhen: 'no' },
+  {
+    id: 'phonology-n-count',
+    text: '「りんご」は3文字、「しんぶんし」は5文字等、「ん」が入った時に文字数の把握が苦手ですか？',
+    score: 5,
+  },
+  {
+    id: 'phonology-sound-steps',
+    text: '「ぐりこ」などの、音の数だけ進む遊びで正しい音の数だけ進めますか？',
+    score: 5,
+    countsWhen: 'no',
+  },
+  { id: 'phonology-kana-order', text: 'ひらがなを「あ」から「ん」まで、順番に言うことが難しいですか？', score: 5 },
+  {
+    id: 'phonology-middle-sound',
+    text: '単語の途中の音を答えることができますか？例：「からおけ」の2つ目の音は？ 答え：「ら」',
+    score: 5,
+    countsWhen: 'no',
+  },
+  { id: 'phonology-reverse-sakana', text: '「さかな」を逆から言えますか？', score: 5, countsWhen: 'no' },
+  { id: 'phonology-ka-words', text: '「か」から始まる言葉を、5個以上言えますか？', score: 2, countsWhen: 'no' },
+  {
+    id: 'phonology-small-tsu',
+    text: '「がっこう」「まって」などの小さい「っ」を書き間違えたり、書かないことがありますか？',
+    score: 2,
+  },
+  { id: 'phonology-reverse-uremo', text: '「うれも」を逆から言うことが難しいですか？', score: 3 },
+];
+
+const WRITING_PHONOLOGY_QUESTIONS: Step03Question[] = [
+  ...READING_PHONOLOGY_QUESTIONS.slice(0, 6),
+  {
+    id: 'phonology-kana-write',
+    text: 'ひらがな50音を「あ」から「ん」まで、すらすら書けますか？',
+    score: 5,
+    countsWhen: 'no',
+  },
+  ...READING_PHONOLOGY_QUESTIONS.slice(6),
+];
+
+const EYE_QUESTIONS: Step03Question[] = [
+  { id: 'eye-line-skip', text: '読むときに、行を飛ばしたり同じ行をまた読んだりしますか？', score: 5 },
+  { id: 'eye-ball-catch', text: 'ボールを受けるのが苦手ですか？', score: 3 },
+  { id: 'eye-tracking', text: '動くものを目で追うのが苦手ですか？', score: 2 },
+];
+
+const MOTOR_QUESTIONS: Step03Question[] = [
+  { id: 'motor-arm-movement', text: '字を書くときに手首や腕全体を大きく動かすことが多いですか？', score: 5 },
+  {
+    id: 'motor-cut-trace-draw',
+    text: '利き手で、できるだけ正確に切る・なぞる・描くことができますか？',
+    score: 5,
+    countsWhen: 'no',
+  },
+  {
+    id: 'motor-posture',
+    text: '椅子に長く安定して座りにくく、書字中に身体がよく動いたり、姿勢が崩れやすかったりしますか？',
+    score: 2,
+  },
+  { id: 'motor-pressure', text: '字を書くときに筆圧が強すぎる、または弱すぎる傾向がありますか？', score: 2 },
+];
+
+const READING_VISUAL_PERCEPTION_QUESTIONS: Step03Question[] = [
+  { id: 'visual-similar-letters', text: '似た形の文字（例：さ/き、ぬ/め）を読み間違えることがよくありますか？', score: 5 },
+  { id: 'visual-search', text: '目の前の物でも、探すのに時間がかかりますか？', score: 2 },
+];
+
+const WRITING_VISUAL_PERCEPTION_QUESTIONS: Step03Question[] = [
+  READING_VISUAL_PERCEPTION_QUESTIONS[0],
+  { id: 'visual-mirror-writing', text: '鏡文字をよく書きますか？', score: 5 },
+  READING_VISUAL_PERCEPTION_QUESTIONS[1],
+  { id: 'visual-stroke-order', text: '書き順がバラバラになりやすいですか？', score: 2 },
+  {
+    id: 'visual-free-space-balance',
+    text: 'マスや枠がある時に比べて、フリースペースに書く場合は、バランスの悪い文字になりやすいですか？',
+    score: 1,
+  },
+];
+
+const RIGIDITY_QUESTIONS: Step03Question[] = [
+  { id: 'rigidity-letter-shape', text: '文字の形にこだわり、書くことが進みにくいですか？', score: 5 },
+  { id: 'rigidity-avoid-mistake', text: '間違いたくないというこだわりを強く持っていますか？', score: 2 },
+  { id: 'rigidity-interest', text: '興味のない課題や授業は受けようとしないですか？', score: 2 },
+  { id: 'rigidity-tracing', text: 'なぞり書きの時にはみ出さないように強くこだわりますか？', score: 2 },
+];
+
+const ATTENTION_QUESTIONS: Step03Question[] = [
+  { id: 'attention-distracted', text: '注意は逸れやすいですか？', score: 5 },
+  { id: 'attention-organizing', text: '整理整頓が苦手ですか？', score: 2 },
+  { id: 'attention-forgetting', text: '忘れ物が多いですか？', score: 2 },
+  { id: 'attention-careless', text: 'ケアレスミスが多いですか？', score: 2 },
+  { id: 'attention-other-things', text: '文字を書いている時に他のことをし出すことが多いですか？', score: 2 },
+];
+
+// STEP03の設問（小1後半シート由来、苦手タイプ別）
+export const STEP03_QUESTIONS: Record<DifficultyKey, Record<FactorType, Step03Question[]>> = {
+  reading: {
+    phonology: READING_PHONOLOGY_QUESTIONS,
+    eye: EYE_QUESTIONS,
+    motor: [],
+    visualPerception: READING_VISUAL_PERCEPTION_QUESTIONS,
+    automation: [],
+    rigidity: RIGIDITY_QUESTIONS,
+    attention: ATTENTION_QUESTIONS,
+  },
+  writing: {
+    phonology: WRITING_PHONOLOGY_QUESTIONS,
+    eye: EYE_QUESTIONS,
+    motor: MOTOR_QUESTIONS,
+    visualPerception: WRITING_VISUAL_PERCEPTION_QUESTIONS,
+    automation: [],
+    rigidity: RIGIDITY_QUESTIONS,
+    attention: ATTENTION_QUESTIONS,
+  },
+  both: {
+    phonology: WRITING_PHONOLOGY_QUESTIONS,
+    eye: EYE_QUESTIONS,
+    motor: MOTOR_QUESTIONS,
+    visualPerception: WRITING_VISUAL_PERCEPTION_QUESTIONS,
+    automation: [],
+    rigidity: RIGIDITY_QUESTIONS,
+    attention: ATTENTION_QUESTIONS,
+  },
 };
 
 // 要因の日本語名
@@ -115,6 +357,7 @@ type ScreeningAction =
   | { type: 'SET_DIFFICULTY_TYPE'; payload: DifficultyType }
   | { type: 'SET_STEP02_ANSWER'; payload: { id: string; value: boolean } }
   | { type: 'SET_STEP03_ANSWER'; payload: { id: string; value: boolean } }
+  | { type: 'SET_STEP03_ANSWERS'; payload: Record<string, boolean> }
   | { type: 'SET_CANDIDATE_FACTORS'; payload: FactorType[] }
   | { type: 'SET_RESULT_FACTORS'; payload: FactorType[] }
   | { type: 'SET_SPECIALIST'; payload: SpecialistType }
@@ -152,6 +395,8 @@ function screeningReducer(state: ScreeningState, action: ScreeningAction): Scree
         ...state,
         step03Answers: { ...state.step03Answers, [action.payload.id]: action.payload.value },
       };
+    case 'SET_STEP03_ANSWERS':
+      return { ...state, step03Answers: action.payload };
     case 'SET_CANDIDATE_FACTORS':
       return { ...state, candidateFactors: action.payload };
     case 'SET_RESULT_FACTORS':
@@ -233,110 +478,146 @@ export function useScreening() {
   return context;
 }
 
-// STEP02で「NO」のときにカウントする設問（肯定形「できますか？」など）
-const STEP02_INVERTED_IDS = new Set(['w4', 'w5', 'r2']);
-// STEP03で「NO」のときにカウントする設問（肯定形「できますか？」など）
-const STEP03_INVERTED_IDS = new Set(['p1', 'p3', 'p4', 'p7', 'p8']);
+function isDifficultyKey(type: DifficultyType): type is DifficultyKey {
+  return type === 'reading' || type === 'writing' || type === 'both';
+}
 
-function step02Counts(answers: Record<string, boolean>, id: string): boolean {
-  const v = answers[id];
-  return STEP02_INVERTED_IDS.has(id) ? !v : !!v;
+function answerCounts(countsWhen: CountWhen | undefined, value: boolean | undefined): boolean {
+  if (value === undefined) return false;
+  return (countsWhen ?? 'yes') === 'yes' ? value : !value;
+}
+
+function step02Counts(question: Step02Question, answers: Record<string, boolean>): boolean {
+  return answerCounts(question.countsWhen, answers[question.id]);
+}
+
+function step03Counts(question: Step03Question, answers: Record<string, boolean>): boolean {
+  return answerCounts(question.countsWhen, answers[question.id]);
+}
+
+export function getStep02Questions(difficultyType: DifficultyType): Step02Question[] {
+  if (!isDifficultyKey(difficultyType)) return [];
+  return STEP02_QUESTIONS[difficultyType];
+}
+
+export function getStep03Questions(
+  difficultyType: DifficultyType,
+  candidateFactors: FactorType[],
+): Step03QuestionWithFactor[] {
+  if (!isDifficultyKey(difficultyType)) return [];
+
+  const questionsByFactor = STEP03_QUESTIONS[difficultyType];
+  return candidateFactors.flatMap((factor) => {
+    if (factor === 'automation') return [];
+    return questionsByFactor[factor].map((question) => ({ ...question, factor }));
+  });
 }
 
 // STEP02の要因候補分類ロジック
 export function calculateCandidateFactors(
   difficultyType: DifficultyType,
-  answers: Record<string, boolean>
+  answers: Record<string, boolean>,
 ): FactorType[] {
+  if (!isDifficultyKey(difficultyType)) return [];
+
   const factors = new Set<FactorType>();
 
-  if (difficultyType === 'writing' || difficultyType === 'both') {
-    // 書くの判定（w4,w5はNOでカウント）
-    const w1 = step02Counts(answers, 'w1'); // 黒板を写すのが苦手
-    const w2 = step02Counts(answers, 'w2'); // 図形模写が苦手
-    const w3 = step02Counts(answers, 'w3'); // 枠からはみ出る
-    const w4 = step02Counts(answers, 'w4'); // 50音表が書けない（NOでカウント）
-    const w5 = step02Counts(answers, 'w5'); // 名前が書けない（NOでカウント）
-    const w6 = step02Counts(answers, 'w6'); // 書くのを嫌がる
-
-    if (w1 || w4 || w5 || w6) {
-      // ①のパターン
-      factors.add('phonology');
-      factors.add('eye');
-      factors.add('motor');
-      factors.add('visualPerception');
-      factors.add('automation');
-    } else if (w2 || w3) {
-      // ②のパターン
-      factors.add('eye');
-      factors.add('motor');
-      factors.add('visualPerception');
-    } else {
-      // ③のパターン
-      factors.add('automation');
+  for (const question of STEP02_QUESTIONS[difficultyType]) {
+    if (!step02Counts(question, answers)) continue;
+    for (const factor of question.factors) {
+      factors.add(factor);
     }
   }
 
-  if (difficultyType === 'reading' || difficultyType === 'both') {
-    // 読むの判定（r2はNOでカウント）
-    const r1 = step02Counts(answers, 'r1'); // 指で追いながら読む
-    const r2 = step02Counts(answers, 'r2'); // 50音表が読めない（NOでカウント）
-    const r3 = step02Counts(answers, 'r3'); // 読むのを嫌がる
-    const r4 = step02Counts(answers, 'r4'); // 逐次読み
-    const r5 = step02Counts(answers, 'r5'); // 助詞が苦手
+  for (const factor of ALWAYS_ASK_FACTORS) {
+    factors.add(factor);
+  }
 
-    if (r2 || r3 || r4 || r5) {
-      // ①のパターン
-      factors.add('phonology');
-      factors.add('eye');
-      factors.add('motor');
-      factors.add('visualPerception');
-      factors.add('automation');
-    } else if (r1) {
-      // ②のパターン
-      factors.add('phonology');
-      factors.add('eye');
-      factors.add('motor');
-      factors.add('automation');
-    } else {
-      // ③のパターン
-      factors.add('automation');
+  return FACTOR_ORDER.filter((factor) => factors.has(factor));
+}
+
+export function calculateFactorScore(
+  difficultyType: DifficultyType,
+  factor: FactorType,
+  answers: Record<string, boolean>,
+): number {
+  if (!isDifficultyKey(difficultyType) || factor === 'automation') return 0;
+
+  return STEP03_QUESTIONS[difficultyType][factor].reduce((total, question) => {
+    return total + (step03Counts(question, answers) ? question.score : 0);
+  }, 0);
+}
+
+export function factorReachedThreshold(
+  difficultyType: DifficultyType,
+  factor: FactorType,
+  answers: Record<string, boolean>,
+): boolean {
+  return calculateFactorScore(difficultyType, factor, answers) >= SCORE_THRESHOLD;
+}
+
+export function getNextStep03Index(
+  difficultyType: DifficultyType,
+  candidateFactors: FactorType[],
+  answers: Record<string, boolean>,
+  fromIndex: number,
+): number {
+  const questions = getStep03Questions(difficultyType, candidateFactors);
+
+  for (let index = fromIndex; index < questions.length; index += 1) {
+    if (!factorReachedThreshold(difficultyType, questions[index].factor, answers)) {
+      return index;
     }
   }
 
-  // こだわり・注意は常にSTEP03で質問する
-  factors.add('rigidity');
-  factors.add('attention');
+  return -1;
+}
 
-  return Array.from(factors);
+export function getPreviousAnsweredStep03Index(
+  difficultyType: DifficultyType,
+  candidateFactors: FactorType[],
+  answers: Record<string, boolean>,
+  fromIndex: number,
+): number {
+  const questions = getStep03Questions(difficultyType, candidateFactors);
+
+  for (let index = fromIndex - 1; index >= 0; index -= 1) {
+    if (answers[questions[index].id] !== undefined) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+export function pruneStep03AnswersAfterIndex(
+  difficultyType: DifficultyType,
+  candidateFactors: FactorType[],
+  answers: Record<string, boolean>,
+  index: number,
+): Record<string, boolean> {
+  const keepIds = new Set(
+    getStep03Questions(difficultyType, candidateFactors)
+      .slice(0, index + 1)
+      .map((question) => question.id),
+  );
+
+  return Object.fromEntries(
+    Object.entries(answers).filter(([questionId]) => keepIds.has(questionId)),
+  );
 }
 
 // STEP03の結果判定ロジック
 export function calculateResultFactors(
+  difficultyType: DifficultyType,
   candidateFactors: FactorType[],
-  answers: Record<string, boolean>
+  answers: Record<string, boolean>,
 ): FactorType[] {
-  const resultFactors: FactorType[] = [];
+  const resultFactors = candidateFactors.filter((factor) => {
+    return factor !== 'automation' && factorReachedThreshold(difficultyType, factor, answers);
+  });
 
-  for (const factor of candidateFactors) {
-    if (factor === 'automation') continue; // 自動化は別処理
-
-    const questions = STEP03_QUESTIONS[factor];
-    let totalScore = 0;
-
-    for (const q of questions) {
-      const counts = STEP03_INVERTED_IDS.has(q.id) ? !answers[q.id] : answers[q.id];
-      if (counts) {
-        totalScore += q.score;
-      }
-    }
-
-    if (totalScore >= 5) {
-      resultFactors.push(factor);
-    }
-  }
-
-  // 全て未満の場合は自動化
+  // 全て5点未満の場合のみ自動化
   if (resultFactors.length === 0) {
     resultFactors.push('automation');
   }
@@ -346,8 +627,13 @@ export function calculateResultFactors(
 
 // 専門職の判定
 export function determineSpecialist(factors: FactorType[]): SpecialistType {
-  const needsST = factors.includes('phonology') || factors.includes('automation');
-  const needsOT = factors.includes('eye') || factors.includes('motor') || factors.includes('visualPerception');
+  const needsST =
+    factors.includes('phonology') ||
+    factors.includes('automation') ||
+    factors.includes('eye') ||
+    factors.includes('visualPerception');
+  const needsOT =
+    factors.includes('motor') || factors.includes('eye') || factors.includes('visualPerception');
 
   if (needsST && needsOT) {
     return 'both';
