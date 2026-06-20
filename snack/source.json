@@ -1,0 +1,26 @@
+{
+  "snackUrl": "https://snack.expo.dev/@hiroa14x/linc",
+  "snackId": "79bea5fc-e685-4cff-9b84-b2e4c3bb7ef1",
+  "accountSnackId": "939cd75c-ecac-4659-b3cc-10dd7ae7a8f7",
+  "hashId": "Gwx9zFxlWsM0Dv5w93voo",
+  "sdkVersion": "54.0.0",
+  "createdAt": "2026-03-10T06:52:40.644Z",
+  "fetchedAt": "2026-06-13T05:24:20Z",
+  "filesInSnack": [
+    "assets/snack-icon.png",
+    "components/AssetExample.js",
+    "README.md",
+    "App.tsx"
+  ],
+  "trackedFiles": [
+    "snack/App.tsx"
+  ],
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
+    "react-native-paper": "4.9.2"
+  },
+  "notes": [
+    "The public Snack App.tsx matched snack/App.tsx when fetched.",
+    "Template files are not tracked because the Linc Snack flow does not import them."
+  ]
+}
