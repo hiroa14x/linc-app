@@ -86,6 +86,7 @@ export default function RootLayout() {
           <ScreeningProvider>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
+              <Stack.Screen name="grade" />
               <Stack.Screen name="step01" />
               <Stack.Screen name="step02" />
               <Stack.Screen name="step03" />

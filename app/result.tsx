@@ -58,7 +58,7 @@ export default function ResultScreen() {
         <View className="h-2 bg-border rounded-full overflow-hidden">
           <View className="h-full bg-primary rounded-full" style={{ width: '100%' }} />
         </View>
-        <Text style={styles.progress} className="text-muted mt-2 text-right">STEP 4/4 完了</Text>
+        <Text style={styles.progress} className="text-muted mt-2 text-right">STEP 5/5 完了</Text>
       </View>
 
       <ScrollView 

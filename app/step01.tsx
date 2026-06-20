@@ -32,9 +32,9 @@ export default function Step01Screen() {
       {/* 進捗バー */}
       <View className="px-6 pt-4">
         <View className="h-2 bg-border rounded-full overflow-hidden">
-          <View className="h-full bg-primary rounded-full" style={{ width: '25%' }} />
+          <View className="h-full bg-primary rounded-full" style={{ width: '40%' }} />
         </View>
-        <Text style={styles.progress} className="text-muted mt-2 text-right">STEP 1/4</Text>
+        <Text style={styles.progress} className="text-muted mt-2 text-right">STEP 2/5</Text>
       </View>
 
       <ScrollView 

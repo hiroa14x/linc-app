@@ -1,328 +1,248 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
 import {
   calculateCandidateFactors,
+  calculateFactorScore,
   calculateResultFactors,
   determineSpecialist,
-  getDifficultyTypeLabel,
-  getSpecialistLabel,
-  getDevelopmentalNote,
-  STEP02_QUESTIONS,
-  STEP03_QUESTIONS,
   FACTOR_NAMES,
+  getDatasetKey,
+  getDevelopmentalNote,
+  getDifficultyTypeLabel,
+  getGradeLevelLabel,
+  getNextStep03Index,
+  getSchoolTerm,
+  getSchoolTermLabel,
+  getSpecialistLabel,
+  getStep02Questions,
+  getStep03Questions,
+  SCREENING_DATASETS,
+  ScreeningDatasetKey,
 } from './screening-context';
 
-describe('STEP02 Questions', () => {
-  it('should have 8 writing questions', () => {
-    expect(STEP02_QUESTIONS.writing).toHaveLength(8);
+const ALL_FACTORS = [
+  'phonology',
+  'eye',
+  'motor',
+  'visualPerception',
+  'rigidity',
+  'attention',
+] as const;
+
+describe('school term and dataset selection', () => {
+  it('uses April through September as the first term', () => {
+    expect(getSchoolTerm(new Date(2026, 3, 1))).toBe('first');
+    expect(getSchoolTerm(new Date(2026, 8, 30))).toBe('first');
   });
 
-  it('should have 7 reading questions', () => {
-    expect(STEP02_QUESTIONS.reading).toHaveLength(7);
-  });
-});
-
-describe('STEP03 Questions', () => {
-  it('should have 9 phonology questions', () => {
-    expect(STEP03_QUESTIONS.phonology).toHaveLength(9);
+  it('uses October through March as the second term', () => {
+    expect(getSchoolTerm(new Date(2026, 9, 1))).toBe('second');
+    expect(getSchoolTerm(new Date(2027, 2, 31))).toBe('second');
   });
 
-  it('should have 3 eye questions', () => {
-    expect(STEP03_QUESTIONS.eye).toHaveLength(3);
-  });
-
-  it('should have 4 motor questions', () => {
-    expect(STEP03_QUESTIONS.motor).toHaveLength(4);
-  });
-
-  it('should have 5 visualPerception questions', () => {
-    expect(STEP03_QUESTIONS.visualPerception).toHaveLength(5);
-  });
-
-  it('should have 4 rigidity questions', () => {
-    expect(STEP03_QUESTIONS.rigidity).toHaveLength(4);
-  });
-
-  it('should have 5 attention questions', () => {
-    expect(STEP03_QUESTIONS.attention).toHaveLength(5);
-  });
-
-  it('should have 0 automation questions', () => {
-    expect(STEP03_QUESTIONS.automation).toHaveLength(0);
+  it('only exposes datasets that exist in the sheet', () => {
+    expect(getDatasetKey('kindergarten', 'first')).toBeNull();
+    expect(getDatasetKey('kindergarten', 'second')).toBe('kindergarten-second');
+    expect(getDatasetKey('grade1', 'first')).toBe('grade1-first');
+    expect(getDatasetKey('grade1', 'second')).toBe('grade1-second');
+    expect(getDatasetKey('grade2', 'first')).toBeNull();
+    expect(getDatasetKey('grade6', 'second')).toBeNull();
   });
 });
 
-describe('calculateCandidateFactors', () => {
-  describe('writing difficulty', () => {
-    it('should return all factors when w1 (blackboard) is true', () => {
-      const factors = calculateCandidateFactors('writing', { w1: true });
-      expect(factors).toContain('phonology');
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('visualPerception');
-      expect(factors).toContain('automation');
-    });
-
-    it('should return all factors when w4 (50音表書けない) is true', () => {
-      const factors = calculateCandidateFactors('writing', { w4: true });
-      expect(factors).toContain('phonology');
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('visualPerception');
-      expect(factors).toContain('automation');
-    });
-
-    it('should return all factors when w5 (名前書けない) is true', () => {
-      const factors = calculateCandidateFactors('writing', { w5: true });
-      expect(factors).toContain('phonology');
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('visualPerception');
-      expect(factors).toContain('automation');
-    });
-
-    it('should return all factors when w6 (書くのを嫌がる) is true', () => {
-      const factors = calculateCandidateFactors('writing', { w6: true });
-      expect(factors).toContain('phonology');
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('visualPerception');
-      expect(factors).toContain('automation');
-    });
-
-    it('should return eye/motor/visualPerception and always rigidity/attention when only w2 (図形模写) is true', () => {
-      const factors = calculateCandidateFactors('writing', { w2: true });
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('visualPerception');
-      expect(factors).toContain('rigidity');
-      expect(factors).toContain('attention');
-    });
-
-    it('should return eye/motor/visualPerception and always rigidity/attention when only w3 (枠からはみ出る) is true', () => {
-      const factors = calculateCandidateFactors('writing', { w3: true });
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('visualPerception');
-      expect(factors).toContain('rigidity');
-      expect(factors).toContain('attention');
-    });
-
-    it('should return automation and always rigidity and attention when all answers are false', () => {
-      const factors = calculateCandidateFactors('writing', {});
-      expect(factors).toContain('automation');
-      expect(factors).toContain('rigidity');
-      expect(factors).toContain('attention');
-      expect(factors.length).toBeGreaterThanOrEqual(3);
-    });
+describe('STEP02 questions by dataset', () => {
+  it.each([
+    ['kindergarten-second', 3, 3, 6],
+    ['grade1-first', 7, 8, 15],
+    ['grade1-second', 6, 8, 14],
+  ] as const)('%s uses the sheet-specific symptom counts', (datasetKey, reading, writing, both) => {
+    expect(getStep02Questions(datasetKey, 'reading')).toHaveLength(reading);
+    expect(getStep02Questions(datasetKey, 'writing')).toHaveLength(writing);
+    expect(getStep02Questions(datasetKey, 'both')).toHaveLength(both);
   });
 
-  describe('reading difficulty', () => {
-    it('should return all factors when r2 (50音表読めない) is true', () => {
-      // r2 is inverted: NO counts. So r2: true means "can read" -> not counted. So we need r2: false for "cannot read"
-      const factors = calculateCandidateFactors('reading', { r2: false });
-      expect(factors).toContain('phonology');
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('visualPerception');
-      expect(factors).toContain('automation');
-      expect(factors).toContain('rigidity');
-      expect(factors).toContain('attention');
+  it('counts a positive kindergarten ability question when the answer is no', () => {
+    const datasetKey = 'kindergarten-second';
+    const question = getStep02Questions(datasetKey, 'reading')[0];
+    const factors = calculateCandidateFactors(datasetKey, 'reading', {
+      [question.id]: false,
     });
 
-    it('should return all factors when r3 (読むのを嫌がる) is true', () => {
-      const factors = calculateCandidateFactors('reading', { r3: true });
-      expect(factors).toContain('phonology');
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('visualPerception');
-      expect(factors).toContain('automation');
-    });
-
-    it('should return all factors when r4 (逐次読み) is true', () => {
-      const factors = calculateCandidateFactors('reading', { r4: true });
-      expect(factors).toContain('phonology');
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('visualPerception');
-      expect(factors).toContain('automation');
-    });
-
-    it('should return all factors when r5 (助詞が苦手) is true', () => {
-      const factors = calculateCandidateFactors('reading', { r5: true });
-      expect(factors).toContain('phonology');
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('visualPerception');
-      expect(factors).toContain('automation');
-    });
-
-    it('should return phonology/eye/motor/automation and always rigidity/attention when only r1 (指で追いながら読む) is true', () => {
-      const factors = calculateCandidateFactors('reading', { r1: true });
-      expect(factors).toContain('phonology');
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('automation');
-      expect(factors).toContain('rigidity');
-      expect(factors).toContain('attention');
-    });
-
-    it('should return automation and always rigidity and attention when all answers are false', () => {
-      const factors = calculateCandidateFactors('reading', {});
-      expect(factors).toContain('automation');
-      expect(factors).toContain('rigidity');
-      expect(factors).toContain('attention');
-      expect(factors.length).toBeGreaterThanOrEqual(3);
-    });
+    expect(factors).toEqual([
+      'phonology',
+      'eye',
+      'visualPerception',
+      'automation',
+      'rigidity',
+      'attention',
+    ]);
   });
 
-  describe('both difficulty', () => {
-    it('should combine factors from both writing and reading', () => {
-      const factors = calculateCandidateFactors('both', { w2: true, r1: true });
-      expect(factors).toContain('eye');
-      expect(factors).toContain('motor');
-      expect(factors).toContain('visualPerception');
-      expect(factors).toContain('phonology');
-      expect(factors).toContain('automation');
-    });
+  it('always asks current-app ASD/ADHD factors without symptom matches', () => {
+    expect(calculateCandidateFactors('grade1-first', 'reading', {})).toEqual([
+      'rigidity',
+      'attention',
+    ]);
   });
 });
 
-describe('calculateResultFactors', () => {
-  it('should return phonology when score >= 5', () => {
-    // p1 has score 5
-    const factors = calculateResultFactors(['phonology'], { p1: true });
-    expect(factors).toContain('phonology');
+describe('STEP03 questions by dataset', () => {
+  it.each([
+    'kindergarten-second',
+    'grade1-first',
+    'grade1-second',
+  ] as ScreeningDatasetKey[])('%s does not ask motor questions for reading', (datasetKey) => {
+    const questions = getStep03Questions(datasetKey, 'reading', ['motor']);
+    expect(questions).toHaveLength(0);
   });
 
-  it('should return automation when no factor reaches 5 points', () => {
-    // No phonology question adds score: inverted (p1,p3,p4,p7,p8) need true to not count, others need false.
-    const noScoreAnswers = {
-      p1: true,
-      p2: false,
-      p3: true,
-      p4: true,
-      p5: false,
-      p6: false,
-      p7: true,
-      p8: true,
-      p9: false,
-    };
-    const factors = calculateResultFactors(['phonology'], noScoreAnswers);
-    expect(factors).toEqual(['automation']);
+  it('uses the 小1前半 cause rows and scores', () => {
+    const dataset = SCREENING_DATASETS['grade1-first'];
+    const writingQuestions = dataset.step03.writing;
+
+    expect(writingQuestions.filter((question) => question.factors.includes('phonology'))).toHaveLength(8);
+    expect(writingQuestions.filter((question) => question.factors.includes('visualPerception'))).toHaveLength(6);
+
+    const eyeQuestions = getStep03Questions('grade1-first', 'reading', ['eye']);
+    expect(eyeQuestions.map((question) => question.score)).toEqual([3, 3, 2]);
   });
 
-  it('should return multiple factors when multiple reach 5 points', () => {
-    // p1 (phonology) = 5, e1 (eye) = 5
-    const factors = calculateResultFactors(['phonology', 'eye'], { p1: true, e1: true });
-    expect(factors).toContain('phonology');
-    expect(factors).toContain('eye');
+  it('uses three ADHD questions for 年長後半 and five for 小1', () => {
+    expect(getStep03Questions('kindergarten-second', 'reading', ['attention'])).toHaveLength(3);
+    expect(getStep03Questions('grade1-first', 'reading', ['attention'])).toHaveLength(5);
+    expect(getStep03Questions('grade1-second', 'reading', ['attention'])).toHaveLength(5);
+  });
+});
+
+describe('visual perception and eye shared scoring', () => {
+  it('asks shared 年長後半 questions once', () => {
+    const questions = getStep03Questions(
+      'kindergarten-second',
+      'reading',
+      ['eye', 'visualPerception'],
+    );
+    const shared = questions.filter(
+      (question) =>
+        question.factors.includes('eye') && question.factors.includes('visualPerception'),
+    );
+
+    expect(shared).toHaveLength(2);
+    expect(new Set(questions.map((question) => question.id)).size).toBe(questions.length);
   });
 
-  it('should return automation when candidate only contains automation', () => {
-    const factors = calculateResultFactors(['automation'], {});
-    expect(factors).toEqual(['automation']);
+  it('adds shared question scores to both factors', () => {
+    const shared = getStep03Questions(
+      'kindergarten-second',
+      'reading',
+      ['eye', 'visualPerception'],
+    ).filter(
+      (question) =>
+        question.factors.includes('eye') && question.factors.includes('visualPerception'),
+    );
+    const answers = Object.fromEntries(shared.map((question) => [question.id, true]));
+
+    expect(calculateFactorScore('kindergarten-second', 'reading', 'eye', answers)).toBe(5);
+    expect(
+      calculateFactorScore('kindergarten-second', 'reading', 'visualPerception', answers),
+    ).toBe(5);
+    expect(
+      calculateResultFactors(
+        'kindergarten-second',
+        'reading',
+        ['eye', 'visualPerception'],
+        answers,
+      ),
+    ).toEqual(['eye', 'visualPerception']);
+  });
+});
+
+describe('scores and early skip', () => {
+  it('requires the 小1前半 eye scores to total at least 5', () => {
+    const eyeQuestions = getStep03Questions('grade1-first', 'reading', ['eye']);
+    const oneAnswer = { [eyeQuestions[0].id]: true };
+    const twoAnswers = { ...oneAnswer, [eyeQuestions[1].id]: true };
+
+    expect(calculateResultFactors('grade1-first', 'reading', ['eye'], oneAnswer)).toEqual([
+      'automation',
+    ]);
+    expect(calculateResultFactors('grade1-first', 'reading', ['eye'], twoAnswers)).toEqual([
+      'eye',
+    ]);
+  });
+
+  it('skips remaining questions for a factor after it reaches 5', () => {
+    const questions = getStep03Questions('grade1-second', 'reading', ['phonology', 'eye']);
+    const firstQuestion = questions[0];
+    const nextIndex = getNextStep03Index(
+      'grade1-second',
+      'reading',
+      ['phonology', 'eye'],
+      { [firstQuestion.id]: false },
+      1,
+    );
+
+    expect(questions[nextIndex].factors).toContain('eye');
+    expect(questions[nextIndex].factors).not.toContain('phonology');
+  });
+
+  it('returns automation only when no non-automation factor reaches 5', () => {
+    expect(
+      calculateResultFactors(
+        'grade1-second',
+        'reading',
+        ['phonology', 'rigidity', 'attention'],
+        {},
+      ),
+    ).toEqual(['automation']);
   });
 });
 
 describe('determineSpecialist', () => {
-  it('should return ST for phonology', () => {
+  it('maps the sheet factors to the requested specialists', () => {
     expect(determineSpecialist(['phonology'])).toBe('ST');
-  });
-
-  it('should return ST for automation', () => {
     expect(determineSpecialist(['automation'])).toBe('ST');
-  });
-
-  it('should return OT for eye', () => {
-    expect(determineSpecialist(['eye'])).toBe('OT');
-  });
-
-  it('should return OT for motor', () => {
     expect(determineSpecialist(['motor'])).toBe('OT');
-  });
-
-  it('should return OT for visualPerception', () => {
-    expect(determineSpecialist(['visualPerception'])).toBe('OT');
-  });
-
-  it('should return both for phonology and eye', () => {
-    expect(determineSpecialist(['phonology', 'eye'])).toBe('both');
-  });
-
-  it('should return both for automation and motor', () => {
-    expect(determineSpecialist(['automation', 'motor'])).toBe('both');
+    expect(determineSpecialist(['eye'])).toBe('both');
+    expect(determineSpecialist(['visualPerception'])).toBe('both');
   });
 });
 
-describe('getDifficultyTypeLabel', () => {
-  it('should return 書く for writing', () => {
+describe('labels', () => {
+  it('returns labels for each difficulty and specialist type', () => {
     expect(getDifficultyTypeLabel('writing')).toBe('書く');
-  });
-
-  it('should return 読む for reading', () => {
     expect(getDifficultyTypeLabel('reading')).toBe('読む');
-  });
-
-  it('should return 書く・読む for both', () => {
     expect(getDifficultyTypeLabel('both')).toBe('書く・読む');
-  });
-
-  it('should return empty string for null', () => {
-    expect(getDifficultyTypeLabel(null)).toBe('');
-  });
-});
-
-describe('getSpecialistLabel', () => {
-  it('should return 言語聴覚士（ST） for ST', () => {
     expect(getSpecialistLabel('ST')).toBe('言語聴覚士（ST）');
-  });
-
-  it('should return 作業療法士（OT） for OT', () => {
     expect(getSpecialistLabel('OT')).toBe('作業療法士（OT）');
-  });
-
-  it('should return 作業療法士（OT）・言語聴覚士（ST） for both', () => {
     expect(getSpecialistLabel('both')).toBe('作業療法士（OT）・言語聴覚士（ST）');
   });
 
-  it('should return empty string for null', () => {
-    expect(getSpecialistLabel(null)).toBe('');
+  it('returns labels for the selected grade and school term', () => {
+    expect(getGradeLevelLabel('kindergarten')).toBe('年長');
+    expect(getGradeLevelLabel('grade1')).toBe('小学1年生');
+    expect(getSchoolTermLabel('first')).toBe('前半');
+    expect(getSchoolTermLabel('second')).toBe('後半');
   });
-});
 
-describe('FACTOR_NAMES', () => {
-  it('should have correct Japanese names', () => {
-    expect(FACTOR_NAMES.phonology).toBe('音韻');
-    expect(FACTOR_NAMES.eye).toBe('眼球運動');
-    expect(FACTOR_NAMES.motor).toBe('運動');
-    expect(FACTOR_NAMES.visualPerception).toBe('視知覚');
-    expect(FACTOR_NAMES.rigidity).toBe('こだわり');
-    expect(FACTOR_NAMES.attention).toBe('注意');
+  it('keeps current app factor labels', () => {
+    expect(ALL_FACTORS.map((factor) => FACTOR_NAMES[factor])).toEqual([
+      '音韻',
+      '眼球運動',
+      '運動',
+      '視知覚',
+      'こだわり',
+      '注意',
+    ]);
     expect(FACTOR_NAMES.automation).toBe('自動化');
   });
 });
 
 describe('getDevelopmentalNote', () => {
-  it('should return note when resultFactors includes rigidity', () => {
+  it('returns a note only for current-app ASD/ADHD factors', () => {
     expect(getDevelopmentalNote(['rigidity'])).toBe(
       'こだわり/注意力が読み書きに影響を与えている可能性があります。',
     );
-  });
-
-  it('should return note when resultFactors includes attention', () => {
-    expect(getDevelopmentalNote(['attention'])).toBe(
-      'こだわり/注意力が読み書きに影響を与えている可能性があります。',
-    );
-  });
-
-  it('should return note when resultFactors includes both', () => {
-    expect(getDevelopmentalNote(['phonology', 'rigidity', 'attention'])).toBe(
-      'こだわり/注意力が読み書きに影響を与えている可能性があります。',
-    );
-  });
-
-  it('should return empty string when resultFactors has neither', () => {
+    expect(getDevelopmentalNote(['attention'])).not.toBe('');
     expect(getDevelopmentalNote(['phonology', 'eye'])).toBe('');
-    expect(getDevelopmentalNote([])).toBe('');
   });
 });

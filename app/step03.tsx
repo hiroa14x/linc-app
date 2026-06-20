@@ -6,10 +6,12 @@ import { useMemo, useEffect, useState } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import {
   useScreening,
-  STEP03_QUESTIONS,
+  getStep03Questions,
+  getNextStep03Index,
+  getPreviousAnsweredStep03Index,
+  pruneStep03AnswersAfterIndex,
   calculateResultFactors,
   determineSpecialist,
-  FactorType
 } from "@/lib/screening-context";
 
 export default function Step03Screen() {
@@ -19,18 +21,8 @@ export default function Step03Screen() {
 
   // 候補要因に基づいた質問リストを取得
   const questions = useMemo(() => {
-    const allQuestions: { id: string; text: string; score: number; factor: FactorType }[] = [];
-
-    for (const factor of state.candidateFactors) {
-      if (factor === 'automation') continue; // 自動化は設問なし
-      const factorQuestions = STEP03_QUESTIONS[factor];
-      for (const q of factorQuestions) {
-        allQuestions.push({ ...q, factor });
-      }
-    }
-
-    return allQuestions;
-  }, [state.candidateFactors]);
+    return getStep03Questions(state.datasetKey, state.difficultyType, state.candidateFactors);
+  }, [state.candidateFactors, state.datasetKey, state.difficultyType]);
 
   // 質問がない場合は直接結果画面へ（useEffectで副作用を処理）
   useEffect(() => {
@@ -50,8 +42,7 @@ export default function Step03Screen() {
   }
 
   const currentQuestion = questions[state.step03Index];
-  const isLastQuestion = state.step03Index === questions.length - 1;
-  const progress = ((state.step03Index + 1) / questions.length) * 25 + 75; // 75-100%
+  const progress = ((state.step03Index + 1) / questions.length) * 30 + 70;
 
   // ワンタップで回答して次へ進む
   const handleAnswer = (value: boolean) => {
@@ -59,16 +50,29 @@ export default function Step03Screen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
-    // 回答を保存
-    dispatch({ 
-      type: 'SET_STEP03_ANSWER', 
-      payload: { id: currentQuestion.id, value } 
-    });
+    const prunedAnswers = pruneStep03AnswersAfterIndex(
+      state.datasetKey,
+      state.difficultyType,
+      state.candidateFactors,
+      state.step03Answers,
+      state.step03Index
+    );
+    const updatedAnswers = { ...prunedAnswers, [currentQuestion.id]: value };
+    const nextIndex = getNextStep03Index(
+      state.datasetKey,
+      state.difficultyType,
+      state.candidateFactors,
+      updatedAnswers,
+      state.step03Index + 1
+    );
 
-    if (isLastQuestion) {
+    dispatch({ type: 'SET_STEP03_ANSWERS', payload: updatedAnswers });
+
+    if (nextIndex === -1) {
       // 結果を計算（現在の回答も含める）
-      const updatedAnswers = { ...state.step03Answers, [currentQuestion.id]: value };
       const resultFactors = calculateResultFactors(
+        state.datasetKey,
+        state.difficultyType,
         state.candidateFactors,
         updatedAnswers
       );
@@ -79,7 +83,7 @@ export default function Step03Screen() {
       dispatch({ type: 'SET_CURRENT_STEP', payload: 'result' });
       router.push('/result');
     } else {
-      dispatch({ type: 'SET_STEP03_INDEX', payload: state.step03Index + 1 });
+      dispatch({ type: 'SET_STEP03_INDEX', payload: nextIndex });
     }
   };
 
@@ -88,8 +92,16 @@ export default function Step03Screen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
-    if (state.step03Index > 0) {
-      dispatch({ type: 'SET_STEP03_INDEX', payload: state.step03Index - 1 });
+    const previousIndex = getPreviousAnsweredStep03Index(
+      state.datasetKey,
+      state.difficultyType,
+      state.candidateFactors,
+      state.step03Answers,
+      state.step03Index
+    );
+
+    if (previousIndex >= 0) {
+      dispatch({ type: 'SET_STEP03_INDEX', payload: previousIndex });
     } else {
       router.back();
     }
@@ -107,7 +119,7 @@ export default function Step03Screen() {
           <View className="h-full bg-primary rounded-full" style={{ width: `${progress}%` }} />
         </View>
         <Text style={styles.progress} className="text-muted mt-2 text-right">
-          STEP 3/4 ({state.step03Index + 1}/{questions.length})
+          STEP 4/5 ({state.step03Index + 1}/{questions.length})
         </Text>
       </View>
 
