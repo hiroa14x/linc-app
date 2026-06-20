@@ -14,8 +14,8 @@ export default function OnboardingScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     dispatch({ type: 'RESET' });
-    dispatch({ type: 'SET_CURRENT_STEP', payload: 'step01' });
-    router.push('/step01');
+    dispatch({ type: 'SET_CURRENT_STEP', payload: 'grade' });
+    router.push('/grade');
   };
 
   const handleContinue = () => {
@@ -24,6 +24,9 @@ export default function OnboardingScreen() {
     }
     // 保存された状態に応じて適切な画面に遷移
     switch (state.currentStep) {
+      case 'grade':
+        router.push('/grade');
+        break;
       case 'step01':
         router.push('/step01');
         break;
@@ -37,7 +40,7 @@ export default function OnboardingScreen() {
         router.push('/result');
         break;
       default:
-        router.push('/step01');
+        router.push('/grade');
     }
   };
 
@@ -49,7 +52,7 @@ export default function OnboardingScreen() {
     );
   }
 
-  const hasProgress = state.currentStep !== 'onboarding' && state.difficultyType !== null;
+  const hasProgress = state.currentStep !== 'onboarding';
 
   return (
     <ScreenContainer className="flex-1 px-6 bg-background" edges={["top", "bottom", "left", "right"]}>

@@ -16,12 +16,12 @@ export default function Step02Screen() {
 
   // 現在の苦手タイプに応じた質問リストを取得
   const questions = useMemo(() => {
-    return getStep02Questions(state.difficultyType);
-  }, [state.difficultyType]);
+    return getStep02Questions(state.datasetKey, state.difficultyType);
+  }, [state.datasetKey, state.difficultyType]);
 
   const currentQuestion = questions[state.step02Index];
   const isLastQuestion = state.step02Index === questions.length - 1;
-  const progress = ((state.step02Index + 1) / questions.length) * 50 + 25; // 25-75%
+  const progress = ((state.step02Index + 1) / questions.length) * 30 + 40;
 
   // ワンタップで回答して次へ進む
   const handleAnswer = (value: boolean) => {
@@ -40,6 +40,7 @@ export default function Step02Screen() {
       // 要因候補を計算（現在の回答も含める）
       const updatedAnswers = { ...state.step02Answers, [currentQuestion.id]: value };
       const candidateFactors = calculateCandidateFactors(
+        state.datasetKey,
         state.difficultyType,
         updatedAnswers
       );
@@ -76,7 +77,7 @@ export default function Step02Screen() {
           <View className="h-full bg-primary rounded-full" style={{ width: `${progress}%` }} />
         </View>
         <Text style={styles.progress} className="text-muted mt-2 text-right">
-          STEP 2/4 ({state.step02Index + 1}/{questions.length})
+          STEP 3/5 ({state.step02Index + 1}/{questions.length})
         </Text>
       </View>
 

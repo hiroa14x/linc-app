@@ -6,6 +6,8 @@ import { ScreenContainer } from "@/components/screen-container";
 import { 
   useScreening,
   getDifficultyTypeLabel,
+  getGradeLevelLabel,
+  getSchoolTermLabel,
   getSpecialistLabel,
   FACTOR_NAMES
 } from "@/lib/screening-context";
@@ -15,6 +17,8 @@ export default function ContactScreen() {
   const { state } = useScreening();
 
   const difficultyLabel = getDifficultyTypeLabel(state.difficultyType);
+  const gradeLabel = getGradeLevelLabel(state.gradeLevel);
+  const schoolTermLabel = getSchoolTermLabel(state.schoolTerm);
   const specialistLabel = getSpecialistLabel(state.specialist);
   const factorLabels = state.resultFactors.map(f => FACTOR_NAMES[f]).join('・');
 
@@ -22,6 +26,7 @@ export default function ContactScreen() {
   const generateContactText = () => {
     return `【Lincスクリーニング結果】
 
+■ 学年：${gradeLabel}（${schoolTermLabel}）
 ■ 困りの内容：${difficultyLabel}
 ■ 考えられる要因：${factorLabels}
 ■ おすすめの専門職：${specialistLabel}
@@ -102,6 +107,13 @@ export default function ContactScreen() {
 
         {/* 結果カード */}
         <View className="bg-background rounded-2xl p-5 mb-6 border border-border">
+          <View className="mb-4">
+            <Text style={styles.label} className="text-muted mb-1">学年</Text>
+            <Text style={styles.value} className="text-foreground">
+              {gradeLabel}（{schoolTermLabel}）
+            </Text>
+          </View>
+
           <View className="mb-4">
             <Text style={styles.label} className="text-muted mb-1">困りの内容</Text>
             <Text style={styles.value} className="text-foreground">{difficultyLabel}</Text>

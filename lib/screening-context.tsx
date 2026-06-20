@@ -1,42 +1,41 @@
-import React, { createContext, useContext, useReducer, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 苦手タイプ
-export type DifficultyType = 'writing' | 'reading' | 'both' | null;
+import {
+  DifficultyKey,
+  DifficultyType,
+  FactorType,
+  GradeLevel,
+  GRADE_LABELS,
+  SCREENING_DATASETS,
+  SchoolTerm,
+  ScreeningDatasetKey,
+  Step02Question,
+  Step03Question,
+  TERM_LABELS,
+} from './screening-data';
 
-// 要因タイプ
-export type FactorType =
-  | 'phonology'
-  | 'eye'
-  | 'motor'
-  | 'visualPerception'
-  | 'automation'
-  | 'rigidity'
-  | 'attention';
+export {
+  GRADE_LEVELS,
+  GRADE_LABELS,
+  SCREENING_DATASETS,
+  TERM_LABELS,
+  getDatasetKey,
+  getSchoolTerm,
+} from './screening-data';
+export type {
+  CountWhen,
+  DifficultyKey,
+  DifficultyType,
+  FactorType,
+  GradeLevel,
+  SchoolTerm,
+  ScreeningDatasetKey,
+  Step02Question,
+  Step03Question,
+} from './screening-data';
 
-// 専門職タイプ
 export type SpecialistType = 'ST' | 'OT' | 'both' | null;
-
-type DifficultyKey = Exclude<DifficultyType, null>;
-type CountWhen = 'yes' | 'no';
-
-export type Step02Question = {
-  id: string;
-  text: string;
-  factors: FactorType[];
-  countsWhen?: CountWhen;
-};
-
-export type Step03Question = {
-  id: string;
-  text: string;
-  score: number;
-  countsWhen?: CountWhen;
-};
-
-export type Step03QuestionWithFactor = Step03Question & {
-  factor: FactorType;
-};
 
 const FACTOR_ORDER: FactorType[] = [
   'phonology',
@@ -51,285 +50,6 @@ const FACTOR_ORDER: FactorType[] = [
 const ALWAYS_ASK_FACTORS: FactorType[] = ['rigidity', 'attention'];
 const SCORE_THRESHOLD = 5;
 
-// STEP02の設問（小1後半シート由来）
-export const STEP02_QUESTIONS: Record<DifficultyKey, Step02Question[]> = {
-  reading: [
-    {
-      id: 'r1',
-      text: '音読の際、読む行を指で押さえながら読むことがよくありますか？',
-      factors: ['phonology', 'eye', 'automation'],
-    },
-    {
-      id: 'r2',
-      text: '字を読むことを嫌がりますか？',
-      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'r3',
-      text: '逐次読みをしますか？',
-      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'r4',
-      text: '文末や助詞を正確に読むことが苦手ですか？',
-      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'r5',
-      text: '読む時に読み間違えが多い、勝手読みをしますか？',
-      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'r6',
-      text: '音読でつっかえてしまいますか？',
-      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
-    },
-  ],
-  writing: [
-    {
-      id: 'w1',
-      text: '黒板を写すのが苦手、または遅いですか？',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'w2',
-      text: '図形や文字を見て同じように書き写すことが苦手ですか？',
-      factors: ['eye', 'motor', 'visualPerception'],
-    },
-    {
-      id: 'w3',
-      text: 'マス目や枠から文字がはみ出ることがよくありますか？',
-      factors: ['eye', 'motor', 'visualPerception'],
-    },
-    {
-      id: 'w4',
-      text: '自分の名前をひらがなで正しく書くことができますか？',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-      countsWhen: 'no',
-    },
-    {
-      id: 'w5',
-      text: '字を書くことを嫌がりますか？',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'w6',
-      text: 'ひらがな、カタカナを覚えられませんか？（読みも書きもできない）',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'w7',
-      text: 'ひらがな、カタカナを覚えられませんか？（読めるが書けない）',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'w8',
-      text: '文字を書くのに時間がかかりますか？',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-    },
-  ],
-  both: [
-    {
-      id: 'b1',
-      text: '音読の際、読む行を指で押さえながら読むことがよくありますか？',
-      factors: ['phonology', 'eye', 'automation'],
-    },
-    {
-      id: 'b2',
-      text: '字を読むことを嫌がりますか？',
-      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'b3',
-      text: '逐次読みをしますか？',
-      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'b4',
-      text: '文末や助詞を正確に読むことが苦手ですか？',
-      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'b5',
-      text: '読む時に読み間違えが多い、勝手読みをしますか？',
-      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'b6',
-      text: '音読でつっかえてしまいますか？',
-      factors: ['phonology', 'eye', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'b7',
-      text: '黒板を写すのが苦手、または遅いですか？',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'b8',
-      text: '図形や文字を見て同じように書き写すことが苦手ですか？',
-      factors: ['eye', 'motor', 'visualPerception'],
-    },
-    {
-      id: 'b9',
-      text: 'マス目や枠から文字がはみ出ることがよくありますか？',
-      factors: ['eye', 'motor', 'visualPerception'],
-    },
-    {
-      id: 'b10',
-      text: '自分の名前をひらがなで正しく書くことができますか？',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-      countsWhen: 'no',
-    },
-    {
-      id: 'b11',
-      text: '字を書くことを嫌がりますか？',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'b12',
-      text: 'ひらがな、カタカナを覚えられませんか？（読みも書きもできない）',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'b13',
-      text: 'ひらがな、カタカナを覚えられませんか？（読めるが書けない）',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-    },
-    {
-      id: 'b14',
-      text: '文字を書くのに時間がかかりますか？',
-      factors: ['phonology', 'eye', 'motor', 'visualPerception', 'automation'],
-    },
-  ],
-};
-
-const READING_PHONOLOGY_QUESTIONS: Step03Question[] = [
-  { id: 'phonology-shiritori', text: 'しりとりができますか？', score: 5, countsWhen: 'no' },
-  {
-    id: 'phonology-n-count',
-    text: '「りんご」は3文字、「しんぶんし」は5文字等、「ん」が入った時に文字数の把握が苦手ですか？',
-    score: 5,
-  },
-  {
-    id: 'phonology-sound-steps',
-    text: '「ぐりこ」などの、音の数だけ進む遊びで正しい音の数だけ進めますか？',
-    score: 5,
-    countsWhen: 'no',
-  },
-  { id: 'phonology-kana-order', text: 'ひらがなを「あ」から「ん」まで、順番に言うことが難しいですか？', score: 5 },
-  {
-    id: 'phonology-middle-sound',
-    text: '単語の途中の音を答えることができますか？例：「からおけ」の2つ目の音は？ 答え：「ら」',
-    score: 5,
-    countsWhen: 'no',
-  },
-  { id: 'phonology-reverse-sakana', text: '「さかな」を逆から言えますか？', score: 5, countsWhen: 'no' },
-  { id: 'phonology-ka-words', text: '「か」から始まる言葉を、5個以上言えますか？', score: 2, countsWhen: 'no' },
-  {
-    id: 'phonology-small-tsu',
-    text: '「がっこう」「まって」などの小さい「っ」を書き間違えたり、書かないことがありますか？',
-    score: 2,
-  },
-  { id: 'phonology-reverse-uremo', text: '「うれも」を逆から言うことが難しいですか？', score: 3 },
-];
-
-const WRITING_PHONOLOGY_QUESTIONS: Step03Question[] = [
-  ...READING_PHONOLOGY_QUESTIONS.slice(0, 6),
-  {
-    id: 'phonology-kana-write',
-    text: 'ひらがな50音を「あ」から「ん」まで、すらすら書けますか？',
-    score: 5,
-    countsWhen: 'no',
-  },
-  ...READING_PHONOLOGY_QUESTIONS.slice(6),
-];
-
-const EYE_QUESTIONS: Step03Question[] = [
-  { id: 'eye-line-skip', text: '読むときに、行を飛ばしたり同じ行をまた読んだりしますか？', score: 5 },
-  { id: 'eye-ball-catch', text: 'ボールを受けるのが苦手ですか？', score: 3 },
-  { id: 'eye-tracking', text: '動くものを目で追うのが苦手ですか？', score: 2 },
-];
-
-const MOTOR_QUESTIONS: Step03Question[] = [
-  { id: 'motor-arm-movement', text: '字を書くときに手首や腕全体を大きく動かすことが多いですか？', score: 5 },
-  {
-    id: 'motor-cut-trace-draw',
-    text: '利き手で、できるだけ正確に切る・なぞる・描くことができますか？',
-    score: 5,
-    countsWhen: 'no',
-  },
-  {
-    id: 'motor-posture',
-    text: '椅子に長く安定して座りにくく、書字中に身体がよく動いたり、姿勢が崩れやすかったりしますか？',
-    score: 2,
-  },
-  { id: 'motor-pressure', text: '字を書くときに筆圧が強すぎる、または弱すぎる傾向がありますか？', score: 2 },
-];
-
-const READING_VISUAL_PERCEPTION_QUESTIONS: Step03Question[] = [
-  { id: 'visual-similar-letters', text: '似た形の文字（例：さ/き、ぬ/め）を読み間違えることがよくありますか？', score: 5 },
-  { id: 'visual-search', text: '目の前の物でも、探すのに時間がかかりますか？', score: 2 },
-];
-
-const WRITING_VISUAL_PERCEPTION_QUESTIONS: Step03Question[] = [
-  READING_VISUAL_PERCEPTION_QUESTIONS[0],
-  { id: 'visual-mirror-writing', text: '鏡文字をよく書きますか？', score: 5 },
-  READING_VISUAL_PERCEPTION_QUESTIONS[1],
-  { id: 'visual-stroke-order', text: '書き順がバラバラになりやすいですか？', score: 2 },
-  {
-    id: 'visual-free-space-balance',
-    text: 'マスや枠がある時に比べて、フリースペースに書く場合は、バランスの悪い文字になりやすいですか？',
-    score: 1,
-  },
-];
-
-const RIGIDITY_QUESTIONS: Step03Question[] = [
-  { id: 'rigidity-letter-shape', text: '文字の形にこだわり、書くことが進みにくいですか？', score: 5 },
-  { id: 'rigidity-avoid-mistake', text: '間違いたくないというこだわりを強く持っていますか？', score: 2 },
-  { id: 'rigidity-interest', text: '興味のない課題や授業は受けようとしないですか？', score: 2 },
-  { id: 'rigidity-tracing', text: 'なぞり書きの時にはみ出さないように強くこだわりますか？', score: 2 },
-];
-
-const ATTENTION_QUESTIONS: Step03Question[] = [
-  { id: 'attention-distracted', text: '注意は逸れやすいですか？', score: 5 },
-  { id: 'attention-organizing', text: '整理整頓が苦手ですか？', score: 2 },
-  { id: 'attention-forgetting', text: '忘れ物が多いですか？', score: 2 },
-  { id: 'attention-careless', text: 'ケアレスミスが多いですか？', score: 2 },
-  { id: 'attention-other-things', text: '文字を書いている時に他のことをし出すことが多いですか？', score: 2 },
-];
-
-// STEP03の設問（小1後半シート由来、苦手タイプ別）
-export const STEP03_QUESTIONS: Record<DifficultyKey, Record<FactorType, Step03Question[]>> = {
-  reading: {
-    phonology: READING_PHONOLOGY_QUESTIONS,
-    eye: EYE_QUESTIONS,
-    motor: [],
-    visualPerception: READING_VISUAL_PERCEPTION_QUESTIONS,
-    automation: [],
-    rigidity: RIGIDITY_QUESTIONS,
-    attention: ATTENTION_QUESTIONS,
-  },
-  writing: {
-    phonology: WRITING_PHONOLOGY_QUESTIONS,
-    eye: EYE_QUESTIONS,
-    motor: MOTOR_QUESTIONS,
-    visualPerception: WRITING_VISUAL_PERCEPTION_QUESTIONS,
-    automation: [],
-    rigidity: RIGIDITY_QUESTIONS,
-    attention: ATTENTION_QUESTIONS,
-  },
-  both: {
-    phonology: WRITING_PHONOLOGY_QUESTIONS,
-    eye: EYE_QUESTIONS,
-    motor: MOTOR_QUESTIONS,
-    visualPerception: WRITING_VISUAL_PERCEPTION_QUESTIONS,
-    automation: [],
-    rigidity: RIGIDITY_QUESTIONS,
-    attention: ATTENTION_QUESTIONS,
-  },
-};
-
-// 要因の日本語名
 export const FACTOR_NAMES: Record<FactorType, string> = {
   phonology: '音韻',
   eye: '眼球運動',
@@ -341,19 +61,30 @@ export const FACTOR_NAMES: Record<FactorType, string> = {
 };
 
 interface ScreeningState {
+  gradeLevel: GradeLevel | null;
+  schoolTerm: SchoolTerm | null;
+  datasetKey: ScreeningDatasetKey | null;
   difficultyType: DifficultyType;
   step02Answers: Record<string, boolean>;
   step03Answers: Record<string, boolean>;
   candidateFactors: FactorType[];
   resultFactors: FactorType[];
   specialist: SpecialistType;
-  currentStep: 'onboarding' | 'step01' | 'step02' | 'step03' | 'result';
+  currentStep: 'onboarding' | 'grade' | 'step01' | 'step02' | 'step03' | 'result';
   step02Index: number;
   step03Index: number;
   isLoading: boolean;
 }
 
 type ScreeningAction =
+  | {
+      type: 'SET_GRADE_SELECTION';
+      payload: {
+        gradeLevel: GradeLevel;
+        schoolTerm: SchoolTerm;
+        datasetKey: ScreeningDatasetKey;
+      };
+    }
   | { type: 'SET_DIFFICULTY_TYPE'; payload: DifficultyType }
   | { type: 'SET_STEP02_ANSWER'; payload: { id: string; value: boolean } }
   | { type: 'SET_STEP03_ANSWER'; payload: { id: string; value: boolean } }
@@ -369,6 +100,9 @@ type ScreeningAction =
   | { type: 'SET_LOADING'; payload: boolean };
 
 const initialState: ScreeningState = {
+  gradeLevel: null,
+  schoolTerm: null,
+  datasetKey: null,
   difficultyType: null,
   step02Answers: {},
   step03Answers: {},
@@ -383,8 +117,31 @@ const initialState: ScreeningState = {
 
 function screeningReducer(state: ScreeningState, action: ScreeningAction): ScreeningState {
   switch (action.type) {
+    case 'SET_GRADE_SELECTION':
+      return {
+        ...state,
+        ...action.payload,
+        difficultyType: null,
+        step02Answers: {},
+        step03Answers: {},
+        candidateFactors: [],
+        resultFactors: [],
+        specialist: null,
+        step02Index: 0,
+        step03Index: 0,
+      };
     case 'SET_DIFFICULTY_TYPE':
-      return { ...state, difficultyType: action.payload };
+      return {
+        ...state,
+        difficultyType: action.payload,
+        step02Answers: {},
+        step03Answers: {},
+        candidateFactors: [],
+        resultFactors: [],
+        specialist: null,
+        step02Index: 0,
+        step03Index: 0,
+      };
     case 'SET_STEP02_ANSWER':
       return {
         ...state,
@@ -427,17 +184,38 @@ const ScreeningContext = createContext<{
 
 const STORAGE_KEY = 'linc_screening_state';
 
+function normalizeSavedState(savedState: Partial<ScreeningState>): Partial<ScreeningState> {
+  if (savedState.datasetKey && savedState.gradeLevel && savedState.schoolTerm) {
+    return savedState;
+  }
+
+  // 旧版とは質問IDが異なるため、保存済み回答を混在させず学年選択から再開する。
+  return {
+    gradeLevel: null,
+    schoolTerm: null,
+    datasetKey: null,
+    difficultyType: null,
+    step02Answers: {},
+    step03Answers: {},
+    candidateFactors: [],
+    resultFactors: [],
+    specialist: null,
+    step02Index: 0,
+    step03Index: 0,
+    currentStep: savedState.currentStep === 'onboarding' ? 'onboarding' : 'grade',
+  };
+}
+
 export function ScreeningProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(screeningReducer, initialState);
 
-  // 起動時に保存された状態を復元
   useEffect(() => {
     const loadState = async () => {
       try {
         const savedState = await AsyncStorage.getItem(STORAGE_KEY);
         if (savedState) {
-          const parsed = JSON.parse(savedState);
-          dispatch({ type: 'LOAD_STATE', payload: parsed });
+          const parsed = JSON.parse(savedState) as Partial<ScreeningState>;
+          dispatch({ type: 'LOAD_STATE', payload: normalizeSavedState(parsed) });
         } else {
           dispatch({ type: 'SET_LOADING', payload: false });
         }
@@ -448,7 +226,6 @@ export function ScreeningProvider({ children }: { children: ReactNode }) {
     loadState();
   }, []);
 
-  // 状態が変更されたら保存
   useEffect(() => {
     if (!state.isLoading) {
       const saveState = async () => {
@@ -482,48 +259,53 @@ function isDifficultyKey(type: DifficultyType): type is DifficultyKey {
   return type === 'reading' || type === 'writing' || type === 'both';
 }
 
-function answerCounts(countsWhen: CountWhen | undefined, value: boolean | undefined): boolean {
+function answerCounts(
+  countsWhen: Step02Question['countsWhen'] | Step03Question['countsWhen'],
+  value: boolean | undefined,
+): boolean {
   if (value === undefined) return false;
   return (countsWhen ?? 'yes') === 'yes' ? value : !value;
 }
 
-function step02Counts(question: Step02Question, answers: Record<string, boolean>): boolean {
-  return answerCounts(question.countsWhen, answers[question.id]);
+function getDataset(datasetKey: ScreeningDatasetKey | null) {
+  return datasetKey ? SCREENING_DATASETS[datasetKey] : null;
 }
 
-function step03Counts(question: Step03Question, answers: Record<string, boolean>): boolean {
-  return answerCounts(question.countsWhen, answers[question.id]);
-}
-
-export function getStep02Questions(difficultyType: DifficultyType): Step02Question[] {
-  if (!isDifficultyKey(difficultyType)) return [];
-  return STEP02_QUESTIONS[difficultyType];
+export function getStep02Questions(
+  datasetKey: ScreeningDatasetKey | null,
+  difficultyType: DifficultyType,
+): Step02Question[] {
+  const dataset = getDataset(datasetKey);
+  if (!dataset || !isDifficultyKey(difficultyType)) return [];
+  return dataset.step02[difficultyType];
 }
 
 export function getStep03Questions(
+  datasetKey: ScreeningDatasetKey | null,
   difficultyType: DifficultyType,
   candidateFactors: FactorType[],
-): Step03QuestionWithFactor[] {
-  if (!isDifficultyKey(difficultyType)) return [];
+): Step03Question[] {
+  const dataset = getDataset(datasetKey);
+  if (!dataset || !isDifficultyKey(difficultyType)) return [];
 
-  const questionsByFactor = STEP03_QUESTIONS[difficultyType];
-  return candidateFactors.flatMap((factor) => {
-    if (factor === 'automation') return [];
-    return questionsByFactor[factor].map((question) => ({ ...question, factor }));
-  });
+  const candidateSet = new Set<FactorType>(
+    candidateFactors.filter((factor) => factor !== 'automation'),
+  );
+  return dataset.step03[difficultyType].filter((question) =>
+    question.factors.some((factor) => candidateSet.has(factor)),
+  );
 }
 
-// STEP02の要因候補分類ロジック
 export function calculateCandidateFactors(
+  datasetKey: ScreeningDatasetKey | null,
   difficultyType: DifficultyType,
   answers: Record<string, boolean>,
 ): FactorType[] {
-  if (!isDifficultyKey(difficultyType)) return [];
-
+  const questions = getStep02Questions(datasetKey, difficultyType);
   const factors = new Set<FactorType>();
 
-  for (const question of STEP02_QUESTIONS[difficultyType]) {
-    if (!step02Counts(question, answers)) continue;
+  for (const question of questions) {
+    if (!answerCounts(question.countsWhen, answers[question.id])) continue;
     for (const factor of question.factors) {
       factors.add(factor);
     }
@@ -537,35 +319,63 @@ export function calculateCandidateFactors(
 }
 
 export function calculateFactorScore(
+  datasetKey: ScreeningDatasetKey | null,
   difficultyType: DifficultyType,
   factor: FactorType,
   answers: Record<string, boolean>,
 ): number {
-  if (!isDifficultyKey(difficultyType) || factor === 'automation') return 0;
+  const dataset = getDataset(datasetKey);
+  if (!dataset || !isDifficultyKey(difficultyType) || factor === 'automation') return 0;
 
-  return STEP03_QUESTIONS[difficultyType][factor].reduce((total, question) => {
-    return total + (step03Counts(question, answers) ? question.score : 0);
+  return dataset.step03[difficultyType].reduce((total, question) => {
+    if (!question.factors.includes(factor)) return total;
+    return total + (answerCounts(question.countsWhen, answers[question.id]) ? question.score : 0);
   }, 0);
 }
 
 export function factorReachedThreshold(
+  datasetKey: ScreeningDatasetKey | null,
   difficultyType: DifficultyType,
   factor: FactorType,
   answers: Record<string, boolean>,
 ): boolean {
-  return calculateFactorScore(difficultyType, factor, answers) >= SCORE_THRESHOLD;
+  return calculateFactorScore(datasetKey, difficultyType, factor, answers) >= SCORE_THRESHOLD;
+}
+
+function questionHasUnresolvedFactor(
+  datasetKey: ScreeningDatasetKey | null,
+  difficultyType: DifficultyType,
+  question: Step03Question,
+  candidateFactors: FactorType[],
+  answers: Record<string, boolean>,
+): boolean {
+  return question.factors.some(
+    (factor) =>
+      factor !== 'automation' &&
+      candidateFactors.includes(factor) &&
+      !factorReachedThreshold(datasetKey, difficultyType, factor, answers),
+  );
 }
 
 export function getNextStep03Index(
+  datasetKey: ScreeningDatasetKey | null,
   difficultyType: DifficultyType,
   candidateFactors: FactorType[],
   answers: Record<string, boolean>,
   fromIndex: number,
 ): number {
-  const questions = getStep03Questions(difficultyType, candidateFactors);
+  const questions = getStep03Questions(datasetKey, difficultyType, candidateFactors);
 
   for (let index = fromIndex; index < questions.length; index += 1) {
-    if (!factorReachedThreshold(difficultyType, questions[index].factor, answers)) {
+    if (
+      questionHasUnresolvedFactor(
+        datasetKey,
+        difficultyType,
+        questions[index],
+        candidateFactors,
+        answers,
+      )
+    ) {
       return index;
     }
   }
@@ -574,12 +384,13 @@ export function getNextStep03Index(
 }
 
 export function getPreviousAnsweredStep03Index(
+  datasetKey: ScreeningDatasetKey | null,
   difficultyType: DifficultyType,
   candidateFactors: FactorType[],
   answers: Record<string, boolean>,
   fromIndex: number,
 ): number {
-  const questions = getStep03Questions(difficultyType, candidateFactors);
+  const questions = getStep03Questions(datasetKey, difficultyType, candidateFactors);
 
   for (let index = fromIndex - 1; index >= 0; index -= 1) {
     if (answers[questions[index].id] !== undefined) {
@@ -591,13 +402,14 @@ export function getPreviousAnsweredStep03Index(
 }
 
 export function pruneStep03AnswersAfterIndex(
+  datasetKey: ScreeningDatasetKey | null,
   difficultyType: DifficultyType,
   candidateFactors: FactorType[],
   answers: Record<string, boolean>,
   index: number,
 ): Record<string, boolean> {
   const keepIds = new Set(
-    getStep03Questions(difficultyType, candidateFactors)
+    getStep03Questions(datasetKey, difficultyType, candidateFactors)
       .slice(0, index + 1)
       .map((question) => question.id),
   );
@@ -607,17 +419,18 @@ export function pruneStep03AnswersAfterIndex(
   );
 }
 
-// STEP03の結果判定ロジック
 export function calculateResultFactors(
+  datasetKey: ScreeningDatasetKey | null,
   difficultyType: DifficultyType,
   candidateFactors: FactorType[],
   answers: Record<string, boolean>,
 ): FactorType[] {
-  const resultFactors = candidateFactors.filter((factor) => {
-    return factor !== 'automation' && factorReachedThreshold(difficultyType, factor, answers);
-  });
+  const resultFactors = candidateFactors.filter(
+    (factor) =>
+      factor !== 'automation' &&
+      factorReachedThreshold(datasetKey, difficultyType, factor, answers),
+  );
 
-  // 全て5点未満の場合のみ自動化
   if (resultFactors.length === 0) {
     resultFactors.push('automation');
   }
@@ -625,7 +438,6 @@ export function calculateResultFactors(
   return resultFactors;
 }
 
-// 専門職の判定
 export function determineSpecialist(factors: FactorType[]): SpecialistType {
   const needsST =
     factors.includes('phonology') ||
@@ -635,17 +447,12 @@ export function determineSpecialist(factors: FactorType[]): SpecialistType {
   const needsOT =
     factors.includes('motor') || factors.includes('eye') || factors.includes('visualPerception');
 
-  if (needsST && needsOT) {
-    return 'both';
-  } else if (needsST) {
-    return 'ST';
-  } else if (needsOT) {
-    return 'OT';
-  }
+  if (needsST && needsOT) return 'both';
+  if (needsST) return 'ST';
+  if (needsOT) return 'OT';
   return null;
 }
 
-// 苦手タイプの日本語表示
 export function getDifficultyTypeLabel(type: DifficultyType): string {
   switch (type) {
     case 'writing':
@@ -659,7 +466,14 @@ export function getDifficultyTypeLabel(type: DifficultyType): string {
   }
 }
 
-// 専門職の日本語表示
+export function getGradeLevelLabel(gradeLevel: GradeLevel | null): string {
+  return gradeLevel ? GRADE_LABELS[gradeLevel] : '';
+}
+
+export function getSchoolTermLabel(schoolTerm: SchoolTerm | null): string {
+  return schoolTerm ? TERM_LABELS[schoolTerm] : '';
+}
+
 export function getSpecialistLabel(specialist: SpecialistType): string {
   switch (specialist) {
     case 'ST':
@@ -673,7 +487,6 @@ export function getSpecialistLabel(specialist: SpecialistType): string {
   }
 }
 
-// こだわり/注意が結果に含まれるときの補足文言（専門職には繋げない）
 export function getDevelopmentalNote(resultFactors: FactorType[]): string {
   const hasRigidityOrAttention =
     resultFactors.includes('rigidity') || resultFactors.includes('attention');
